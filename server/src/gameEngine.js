@@ -16,6 +16,9 @@ function participantIds(match) {
 export function startTournament(lobby) {
   if (lobby.status !== "waiting") throw new Error("Tournament already started");
   if (lobby.players.length < 2) throw new Error("Need at least 2 players");
+  if (lobby.players.some((p) => !p.texasTPick)) {
+    throw new Error("Every player must select a Texas T-Pick before the tournament can start");
+  }
 
   const { startingChips, startingBoons, anteAmount } = lobby.settings;
   for (const p of lobby.players) {
@@ -35,6 +38,9 @@ export function startTournament(lobby) {
 }
 
 export function setTexasTPick(lobby, playerId, pickPlayerId) {
+  if (lobby.status !== "waiting") {
+    throw new Error("Texas T-Pick can only be set before the tournament starts");
+  }
   const player = lobby.players.find((p) => p.id === playerId);
   if (!player) throw new Error("Player not found");
   if (!lobby.players.some((p) => p.id === pickPlayerId)) {

@@ -34,22 +34,9 @@ export default function RoundActions({ lobby, me, playerId }) {
 
       <section className="card">
         <h2>Texas T-Pick</h2>
-        <p>Your pick: {me.texasTPick ? playerName(lobby, me.texasTPick) : "Not chosen yet"}</p>
-        <select
-          value={me.texasTPick || ""}
-          onChange={(e) => run("player:setTPick", { pickPlayerId: e.target.value })}
-        >
-          <option value="" disabled>
-            Choose Tournament Winner
-          </option>
-          {lobby.players
-            .filter((p) => !p.eliminated)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-        </select>
+        <p>
+          Your pick (locked in for the tournament): <strong>{playerName(lobby, me.texasTPick)}</strong>
+        </p>
       </section>
 
       {readyMatches.map((match) => (
