@@ -47,21 +47,6 @@ export default function Home() {
       <h1>Texas SMASH'em</h1>
 
       <section className="card">
-        <h2>Host a Tournament</h2>
-        <form onSubmit={handleCreate}>
-          <input
-            placeholder="Your name"
-            value={hostName}
-            onChange={(e) => setHostName(e.target.value)}
-            required
-          />
-          <button disabled={busy} type="submit">
-            Create Lobby
-          </button>
-        </form>
-      </section>
-
-      <section className="card">
         <h2>Join a Tournament</h2>
         <form onSubmit={handleJoin}>
           <input
@@ -82,6 +67,21 @@ export default function Home() {
           </button>
         </form>
       </section>
+
+      <details className="card">
+        <summary>Host a Tournament</summary>
+        <form onSubmit={handleCreate}>
+          <input
+            placeholder="Your name"
+            value={hostName}
+            onChange={(e) => setHostName(e.target.value)}
+            required
+          />
+          <button disabled={busy} type="submit">
+            Create Lobby
+          </button>
+        </form>
+      </details>
 
       {formError && <p className="error">{formError}</p>}
     </div>

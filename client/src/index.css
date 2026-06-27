@@ -88,6 +88,29 @@ a {
   vertical-align: middle;
 }
 
+details.card summary {
+  font-size: 1.5em;
+  font-weight: bold;
+  cursor: pointer;
+  list-style: none;
+}
+
+details.card summary::-webkit-details-marker {
+  display: none;
+}
+
+details.card summary::before {
+  content: "▸ ";
+}
+
+details.card[open] summary::before {
+  content: "▾ ";
+}
+
+details.card form {
+  margin-top: 12px;
+}
+
 .bracket {
   display: flex;
   gap: 32px;
