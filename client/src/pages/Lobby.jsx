@@ -14,19 +14,20 @@ function TexasTPickSelector({ lobby, me, playerId }) {
   }
 
   return (
-    <div className="card">
-      <h3>Your Texas T-Pick (who will win the whole tournament?)</h3>
-      <p>This locks in once the tournament starts.</p>
+    <div className="card card-blue" style={{ marginTop: 14 }}>
+      <span className="section-label">Texas T-Pick</span>
+      <p style={{ marginBottom: 10 }}>Who will win the whole tournament? Locks in when play begins.</p>
       <select value={me.texasTPick || ""} onChange={(e) => pick(e.target.value)}>
-        <option value="" disabled>
-          Choose your pick
-        </option>
+        <option value="" disabled>Choose your pick</option>
         {lobby.players.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
+          <option key={p.id} value={p.id}>{p.name}</option>
         ))}
       </select>
+      {me.texasTPick && (
+        <p style={{ marginTop: 8, color: "var(--green)", fontSize: "0.8rem" }}>
+          ✓ Pick saved — {lobby.players.find(p => p.id === me.texasTPick)?.name}
+        </p>
+      )}
     </div>
   );
 }
@@ -37,9 +38,7 @@ export default function Lobby() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (rejoinAttempted && !lobby) {
-      navigate("/", { replace: true });
-    }
+    if (rejoinAttempted && !lobby) navigate("/", { replace: true });
   }, [rejoinAttempted, lobby, navigate]);
 
   if (!lobby) {
@@ -60,60 +59,112 @@ export default function Lobby() {
     navigate("/");
   }
 
+  const totalPlayers = lobby.players.length;
+  const picksDone = lobby.players.filter(p => p.texasTPick).length;
+
   return (
-    <div className="page lobby">
-      <header className="lobby-header">
+    <div className="page">
+      <div className="page-header">
         <div>
-          <h1>Lobby {lobby.code}</h1>
-          <p>Status: {lobby.status}</p>
+          <span className="wordmark">Texas SMASH'em</span>
+          <span className="page-subtitle">
+            Lobby {lobby.code} · {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
+          </span>
         </div>
-        <div className="lobby-actions">
+        <div className="page-header-right">
+          {me && (
+            <div className="chip-pill">
+              <div className="chip-icon" />
+              <span className="chip-value">{me.chips ?? 0}</span>
+            </div>
+          )}
           {isHost && <Link to={`/lobby/${lobby.code}/admin`}>Host Admin</Link>}
-          <button onClick={handleLeave}>Leave</button>
+          <button className="btn-ghost" onClick={handleLeave}>Leave</button>
         </div>
-      </header>
+      </div>
 
       {lobby.status === "waiting" && (
-        <section>
-          <h2>Players ({lobby.players.length}/24)</h2>
-          <ul className="player-list">
-            {lobby.players.map((p) => (
-              <li key={p.id} className={p.id === playerId ? "me" : ""}>
-                <input type="checkbox" checked={!!p.texasTPick} readOnly title="Texas T-Pick selected" />
-                {" "}
-                {p.name} {p.isHost && "(Host)"} {!p.connected && "(offline)"}
-              </li>
-            ))}
-          </ul>
+        <div className="cols-2">
+          <div>
+            <div className="card card-gold animate-up">
+              <span className="section-label">Lobby Code</span>
+              <div className="lobby-code-display">{lobby.code}</div>
+              <p style={{ textAlign: "center", marginTop: 10, fontSize: "0.72rem" }}>
+                Share this code with players
+              </p>
+            </div>
+            <TexasTPickSelector lobby={lobby} me={me} playerId={playerId} />
+          </div>
 
-          <TexasTPickSelector lobby={lobby} me={me} playerId={playerId} />
+          <div className="card animate-up-2">
+            <span className="section-label">Players ({totalPlayers} / 24)</span>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${(totalPlayers / 24) * 100}%` }} />
+            </div>
+            <ul className="player-list">
+              {lobby.players.map((p) => (
+                <li key={p.id} className={p.id === playerId ? "me" : ""}>
+                  <input
+                    type="checkbox"
+                    checked={!!p.texasTPick}
+                    readOnly
+                    title={p.texasTPick ? "T-Pick selected" : "No T-Pick yet"}
+                  />
+                  <span style={{ flex: 1 }}>{p.name}</span>
+                  {p.isHost && <span className="player-badge badge-host">Host</span>}
+                  {!p.connected && <span className="player-badge badge-offline">Offline</span>}
+                </li>
+              ))}
+            </ul>
 
-          {isHost && (
-            <button
-              onClick={handleStart}
-              disabled={lobby.players.length < 2 || lobby.players.some((p) => !p.texasTPick)}
-            >
-              Start Tournament
-            </button>
-          )}
-          {isHost && lobby.players.some((p) => !p.texasTPick) && (
-            <p>Waiting for everyone to select their Texas T-Pick before you can start.</p>
-          )}
-          {!isHost && <p>Waiting for the host to start the tournament…</p>}
-        </section>
+            {isHost && (
+              <div style={{ marginTop: 14 }}>
+                {picksDone < totalPlayers && (
+                  <div className="notif notif-warn">
+                    ⏳ Waiting for {totalPlayers - picksDone} player{totalPlayers - picksDone !== 1 ? "s" : ""} to select their T-Pick.
+                  </div>
+                )}
+                <button
+                  onClick={handleStart}
+                  disabled={totalPlayers < 2 || picksDone < totalPlayers}
+                  style={{ width: "100%" }}
+                >
+                  Start Tournament
+                </button>
+              </div>
+            )}
+            {!isHost && <p style={{ marginTop: 10 }}>Waiting for the host to start…</p>}
+          </div>
+        </div>
       )}
 
       {lobby.status !== "waiting" && (
-        <section>
+        <div>
           {lobby.status === "complete" && lobby.champion && (
-            <h2>🏆 Champion: {lobby.champion.name}</h2>
+            <div className="card card-gold" style={{ textAlign: "center", padding: "24px 22px" }}>
+              <span className="section-label">Champion</span>
+              <div style={{ fontFamily: "var(--font-d)", fontSize: "2rem", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                🏆 {lobby.champion.name}
+              </div>
+            </div>
           )}
-          <p>Pot: {lobby.pot} chips</p>
-          <Bracket bracket={lobby.bracket} highlightPlayerId={playerId} />
+
+          <div className="card card-gold">
+            <div className="pot-display">
+              <span className="pot-label">Tournament Pot</span>
+              <div className="pot-amount">{lobby.pot.toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div className="card">
+            <span className="section-label">Bracket</span>
+            <Bracket bracket={lobby.bracket} highlightPlayerId={playerId} />
+          </div>
+
           {lobby.status === "in_progress" && (
             <RoundActions lobby={lobby} me={me} playerId={playerId} />
           )}
-        </section>
+        </div>
       )}
     </div>
   );

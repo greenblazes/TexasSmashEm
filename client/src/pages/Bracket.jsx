@@ -7,24 +7,23 @@ export default function Bracket({ bracket, highlightPlayerId }) {
         <div className="bracket-round" key={idx}>
           <h3>{roundLabel(idx, bracket.rounds.length)}</h3>
           {round.map((match) => (
-            <div
-              className={`match match-${match.status}`}
-              key={match.id}
-            >
-              <div
-                className={matchSlotClass(match, "a", highlightPlayerId)}
-              >
+            <div className={`match match-${match.status}`} key={match.id}>
+              {match.status === "ready" && (
+                <div style={{ padding: "5px 10px", display: "flex", alignItems: "center", fontSize: "0.6rem", letterSpacing: "0.15em", color: "var(--text-dim)", borderBottom: "1px solid var(--border)" }}>
+                  <span className="live-dot" />
+                  LIVE
+                </div>
+              )}
+              <div className={matchSlotClass(match, "a", highlightPlayerId)}>
                 {match.playerAName || (match.status === "pending" ? "TBD" : "—")}
                 {match.winnerId === match.playerA && match.playerA && (
-                  <span className="crown">★</span>
+                  <span className="crown">👑</span>
                 )}
               </div>
-              <div
-                className={matchSlotClass(match, "b", highlightPlayerId)}
-              >
+              <div className={matchSlotClass(match, "b", highlightPlayerId)}>
                 {match.playerBName || (match.status === "pending" ? "TBD" : "—")}
                 {match.winnerId === match.playerB && match.playerB && (
-                  <span className="crown">★</span>
+                  <span className="crown">👑</span>
                 )}
               </div>
             </div>

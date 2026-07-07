@@ -22,22 +22,36 @@ export default function RoundActions({ lobby, me, playerId }) {
 
   return (
     <div className="round-actions">
-      <section className="card">
-        <h2>Your Stats</h2>
-        <p>
-          Chips: <strong>{me.chips}</strong> &nbsp; Boons: <strong>{me.boons}</strong> &nbsp;
-          Points: <strong>{me.points}</strong>
-          {me.hasTrumpCard && <span> &nbsp; 🃏 You hold the Trump Card</span>}
-        </p>
-        <button onClick={() => run("player:buyBoons", {})}>Buy 2 Boons ({lobby.settings.buyBoonsCost} chips)</button>
-      </section>
+      <div className="stat-grid">
+        <div className="stat-tile">
+          <div className="stat-value" style={{ background: "linear-gradient(135deg,#D4A832,#F0C84A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+            {me.chips}
+          </div>
+          <div className="stat-label">Chips</div>
+        </div>
+        <div className="stat-tile">
+          <div className="stat-value" style={{ color: "var(--blue-light)" }}>{me.boons}</div>
+          <div className="stat-label">Boons</div>
+        </div>
+        <div className="stat-tile">
+          <div className="stat-value" style={{ color: "var(--green)" }}>{me.points}</div>
+          <div className="stat-label">Points</div>
+        </div>
+      </div>
 
-      <section className="card">
-        <h2>Texas T-Pick</h2>
-        <p>
-          Your pick (locked in for the tournament): <strong>{playerName(lobby, me.texasTPick)}</strong>
-        </p>
-      </section>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
+        <button onClick={() => run("player:buyBoons", {})} className="btn-ghost">
+          Buy 2 Boons — {lobby.settings.buyBoonsCost} chips
+        </button>
+        {me.hasTrumpCard && <span className="trump-pill">🃏 Trump Card</span>}
+      </div>
+
+      {me.texasTPick && (
+        <div className="card card-blue">
+          <span className="section-label">Texas T-Pick · Locked</span>
+          <p>Your predicted champion: <strong style={{ color: "var(--text)" }}>{playerName(lobby, me.texasTPick)}</strong></p>
+        </div>
+      )}
 
       {readyMatches.map((match) => (
         <MatchActions
@@ -67,122 +81,105 @@ function MatchActions({ lobby, match, me, playerId, isParticipant, run }) {
   const stockBets = lobby.stockBets?.[match.id] || [];
 
   return (
-    <section className="card">
-      <h2>
-        Match: {match.playerAName} vs {match.playerBName}
-      </h2>
-      <p>
-        Boons placed — {match.playerAName}: {handicap.aBoons}, {match.playerBName}: {handicap.bBoons}
+    <div className="card card-red">
+      <div className="vs-banner">
+        <span className="vs-name" style={{ color: "var(--blue-light)" }}>{match.playerAName}</span>
+        <span className="vs-sep">VS</span>
+        <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
+      </div>
+
+      <p style={{ marginBottom: 12 }}>
+        Boons — {match.playerAName}:{" "}
+        {Array.from({ length: handicap.aBoons }).map((_, i) => <span key={i} className="boon-pip" />)}
+        {handicap.aBoons === 0 && "none"}
+        {"  ·  "}
+        {match.playerBName}:{" "}
+        {Array.from({ length: handicap.bBoons }).map((_, i) => <span key={i} className="boon-pip" />)}
+        {handicap.bBoons === 0 && "none"}
         {handicap.percent > 0 && (
-          <> — {playerName(lobby, handicap.handicappedPlayerId)} takes +{handicap.percent}% damage</>
+          <span style={{ color: "var(--red)", marginLeft: 8 }}>
+            {playerName(lobby, handicap.handicappedPlayerId)} +{handicap.percent}% dmg
+          </span>
         )}
       </p>
 
       {!isParticipant && (
-        <>
-          <div>
-            <label>Match Winner prediction: </label>
-            <select
-              value={existingPrediction || ""}
-              onChange={(e) =>
-                run("player:setMatchPrediction", { matchId: match.id, predictedWinnerId: e.target.value })
-              }
-            >
-              <option value="" disabled>
-                Pick a winner
-              </option>
-              <option value={match.playerA}>{match.playerAName}</option>
-              <option value={match.playerB}>{match.playerBName}</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Place Boon(s) on: </label>
-            <select value={boonTarget} onChange={(e) => setBoonTarget(e.target.value)}>
-              <option value={match.playerA}>{match.playerAName}</option>
-              <option value={match.playerB}>{match.playerBName}</option>
-            </select>
-            <input
-              type="number"
-              min={1}
-              max={me.boons}
-              value={boonAmount}
-              onChange={(e) => setBoonAmount(e.target.value)}
-              style={{ width: 60, display: "inline-block" }}
-            />
-            <button
-              onClick={() =>
-                run("player:placeBoon", { matchId: match.id, targetParticipantId: boonTarget, amount: boonAmount })
-              }
-            >
-              Place Boon
-            </button>
-          </div>
-        </>
+        <div className="field">
+          <span className="field-label">Match Winner Prediction</span>
+          <select
+            value={existingPrediction || ""}
+            onChange={(e) => run("player:setMatchPrediction", { matchId: match.id, predictedWinnerId: e.target.value })}
+          >
+            <option value="" disabled>Pick a winner</option>
+            <option value={match.playerA}>{match.playerAName}</option>
+            <option value={match.playerB}>{match.playerBName}</option>
+          </select>
+        </div>
       )}
 
-      {isParticipant && (
-        <div>
-          <label>Place your own Boon(s) on: </label>
-          <select value={boonTarget} onChange={(e) => setBoonTarget(e.target.value)}>
+      <div className="field">
+        <span className="field-label">{isParticipant ? "Place your own Boon(s) on" : "Place Boon(s) on"}</span>
+        <div style={{ display: "flex", gap: 8 }}>
+          <select value={boonTarget} onChange={(e) => setBoonTarget(e.target.value)} style={{ flex: 1 }}>
             <option value={match.playerA}>{match.playerAName}</option>
             <option value={match.playerB}>{match.playerBName}</option>
           </select>
           <input
-            type="number"
-            min={1}
-            max={me.boons}
-            value={boonAmount}
+            type="number" min={1} max={me.boons} value={boonAmount}
             onChange={(e) => setBoonAmount(e.target.value)}
-            style={{ width: 60, display: "inline-block" }}
+            style={{ width: 64, display: "inline-block" }}
           />
           <button
-            onClick={() =>
-              run("player:placeBoon", { matchId: match.id, targetParticipantId: boonTarget, amount: boonAmount })
-            }
+            className="btn-blue"
+            onClick={() => run("player:placeBoon", { matchId: match.id, targetParticipantId: boonTarget, amount: boonAmount })}
           >
-            Place Boon
+            Place
           </button>
         </div>
-      )}
+      </div>
 
       {me.eliminated && (
         <div>
-          <h3>Stock Bet</h3>
-          <p>
+          <span className="field-label" style={{ display: "block", marginBottom: 8 }}>Stock Bet</span>
+          <p style={{ marginBottom: 8 }}>
             Open slots:{" "}
             {lobby.settings.stockPool
               .filter((s) => !stockBets.some((b) => b.stocks === s.stocks))
-              .map((s) => `${s.stocks} stock(s) (x${s.multiplier})`)
+              .map((s) => `${s.stocks} stock(s) ×${s.multiplier}`)
               .join(", ") || "none"}
           </p>
-          <select value={betStocks} onChange={(e) => setBetStocks(Number(e.target.value))}>
-            {lobby.settings.stockPool.map((s) => (
-              <option key={s.stocks} value={s.stocks} disabled={stockBets.some((b) => b.stocks === s.stocks)}>
-                {s.stocks} stock(s) — x{s.multiplier}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min={1}
-            max={me.chips}
-            value={betWager}
-            onChange={(e) => setBetWager(e.target.value)}
-            style={{ width: 70, display: "inline-block" }}
-          />
-          <button
-            onClick={() => run("player:placeStockBet", { matchId: match.id, stocks: betStocks, wager: betWager })}
-          >
-            Place Stock Bet
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <select value={betStocks} onChange={(e) => setBetStocks(Number(e.target.value))} style={{ flex: 1 }}>
+              {lobby.settings.stockPool.map((s) => (
+                <option key={s.stocks} value={s.stocks} disabled={stockBets.some((b) => b.stocks === s.stocks)}>
+                  {s.stocks} stock(s) — ×{s.multiplier}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number" min={1} max={me.chips} value={betWager}
+              onChange={(e) => setBetWager(e.target.value)}
+              style={{ width: 70, display: "inline-block" }}
+            />
+            <button
+              className="btn-blue"
+              onClick={() => run("player:placeStockBet", { matchId: match.id, stocks: betStocks, wager: betWager })}
+            >
+              Bet
+            </button>
+          </div>
 
           {me.chips === 0 && stockBets.length > 0 && (
-            <div>
-              <p>Ride Double on:</p>
+            <div style={{ marginTop: 12 }}>
+              <span className="field-label" style={{ display: "block", marginBottom: 8 }}>Ride Double on</span>
               {stockBets.map((b) => (
-                <button key={b.stocks} onClick={() => run("player:rideDouble", { matchId: match.id, stocks: b.stocks })}>
-                  {playerName(lobby, b.playerId)}'s bet on {b.stocks} stock(s)
+                <button
+                  key={b.stocks}
+                  className="btn-ghost"
+                  style={{ marginRight: 8, marginBottom: 6 }}
+                  onClick={() => run("player:rideDouble", { matchId: match.id, stocks: b.stocks })}
+                >
+                  {playerName(lobby, b.playerId)}'s bet · {b.stocks} stock(s)
                 </button>
               ))}
             </div>
@@ -191,15 +188,23 @@ function MatchActions({ lobby, match, me, playerId, isParticipant, run }) {
       )}
 
       {me.hasTrumpCard && !isParticipant && (
-        <div>
-          <button onClick={() => run("player:playTrumpCard", { matchId: match.id, targetParticipantId: match.playerA })}>
-            Play Trump Card on {match.playerAName}
+        <div style={{ marginTop: 12 }}>
+          <span className="field-label" style={{ display: "block", marginBottom: 8 }}>Play Trump Card on</span>
+          <button
+            className="btn-gold"
+            style={{ marginRight: 8 }}
+            onClick={() => run("player:playTrumpCard", { matchId: match.id, targetParticipantId: match.playerA })}
+          >
+            {match.playerAName}
           </button>
-          <button onClick={() => run("player:playTrumpCard", { matchId: match.id, targetParticipantId: match.playerB })}>
-            Play Trump Card on {match.playerBName}
+          <button
+            className="btn-gold"
+            onClick={() => run("player:playTrumpCard", { matchId: match.id, targetParticipantId: match.playerB })}
+          >
+            {match.playerBName}
           </button>
         </div>
       )}
-    </section>
+    </div>
   );
 }
