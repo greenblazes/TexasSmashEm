@@ -10,121 +10,117 @@ export default function Admin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (rejoinAttempted && !lobby) {
-      navigate("/", { replace: true });
-    } else if (lobby && !isHost) {
-      navigate(`/lobby/${code}`, { replace: true });
-    }
+    if (rejoinAttempted && !lobby) navigate("/", { replace: true });
+    else if (lobby && !isHost) navigate(`/lobby/${code}`, { replace: true });
   }, [rejoinAttempted, lobby, isHost, code, navigate]);
 
-  if (!lobby || !isHost) {
-    return (
-      <div className="page">
-        <p>Loading…</p>
-      </div>
-    );
-  }
+  if (!lobby || !isHost) return <div className="page"><p>Loading…</p></div>;
 
   async function reportResult(matchId, winnerId, remainingStocks) {
     const res = await emitAck("host:reportResult", {
-      code: lobby.code,
-      playerId,
-      matchId,
-      winnerId,
+      code: lobby.code, playerId, matchId, winnerId,
       remainingStocks: Number(remainingStocks) || 0,
     });
     if (!res.ok) alert(res.error);
   }
 
   async function adjustPoints(targetPlayerId, delta) {
-    const res = await emitAck("host:adjustPoints", {
-      code: lobby.code,
-      playerId,
-      targetPlayerId,
-      delta,
-    });
+    const res = await emitAck("host:adjustPoints", { code: lobby.code, playerId, targetPlayerId, delta });
     if (!res.ok) alert(res.error);
   }
 
   async function handleDivvyUp() {
     const res = await emitAck("host:divvyUp", { code: lobby.code, playerId });
     if (!res.ok) alert(res.error);
-    else alert("Pot divvied up — chip totals updated below.");
+    else alert("Pot divvied up — chip totals updated.");
   }
 
-  const readyMatches =
-    lobby.bracket?.rounds.flat().filter((m) => m.status === "ready") || [];
+  const readyMatches = lobby.bracket?.rounds.flat().filter((m) => m.status === "ready") || [];
 
   return (
-    <div className="page admin">
-      <header className="lobby-header">
+    <div className="page">
+      <div className="page-header">
         <div>
-          <h1>Host Admin — {lobby.code}</h1>
-          <p>
-            Status: {lobby.status} &nbsp; Pot: {lobby.pot} chips
-          </p>
+          <span className="wordmark">Host Admin</span>
+          <span className="page-subtitle">
+            Lobby {lobby.code} · {lobby.status} · Pot: {lobby.pot} chips
+          </span>
         </div>
-        <Link to={`/lobby/${lobby.code}`}>Back to Lobby View</Link>
-      </header>
+        <div className="page-header-right">
+          <Link to={`/lobby/${lobby.code}`}>← Lobby View</Link>
+        </div>
+      </div>
 
       {lobby.status === "waiting" && <SettingsEditor lobby={lobby} playerId={playerId} />}
 
-      <section>
-        <h2>Players</h2>
-        <table className="points-table">
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Points</th>
-              <th>Chips</th>
-              <th>Boons</th>
-              <th>T-Pick</th>
-              <th>Trump</th>
-              <th>Eliminated</th>
-              <th>Adjust Points</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lobby.players.map((p) => (
-              <tr key={p.id}>
-                <td>{p.name}</td>
-                <td>{p.points}</td>
-                <td>{p.chips}</td>
-                <td>{p.boons}</td>
-                <td>{lobby.players.find((x) => x.id === p.texasTPick)?.name || "—"}</td>
-                <td>{p.hasTrumpCard ? "🃏" : ""}</td>
-                <td>{p.eliminated ? "Yes" : "No"}</td>
-                <td>
-                  <button onClick={() => adjustPoints(p.id, 1)}>+1</button>
-                  <button onClick={() => adjustPoints(p.id, -1)}>-1</button>
-                  <button onClick={() => adjustPoints(p.id, 10)}>+10</button>
-                  <button onClick={() => adjustPoints(p.id, -10)}>-10</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
       {lobby.bracket && (
-        <section>
-          <h2>Matches Awaiting Result</h2>
-          {readyMatches.length === 0 && <p>No matches currently ready.</p>}
-          {readyMatches.map((m) => (
-            <MatchResultControl key={m.id} match={m} onReport={reportResult} />
-          ))}
+        <>
+          {readyMatches.length > 0 && (
+            <div className="card card-red">
+              <span className="section-label">
+                <span className="live-dot" />
+                Matches Awaiting Result
+              </span>
+              {readyMatches.map((m) => (
+                <MatchResultControl key={m.id} match={m} onReport={reportResult} />
+              ))}
+            </div>
+          )}
 
-          <h2>Full Bracket</h2>
-          <Bracket bracket={lobby.bracket} />
-        </section>
+          <div className="card">
+            <span className="section-label">Full Bracket</span>
+            <Bracket bracket={lobby.bracket} />
+          </div>
+        </>
       )}
 
+      <div className="card">
+        <span className="section-label">Players</span>
+        <div style={{ overflowX: "auto" }}>
+          <table className="points-table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Points</th>
+                <th>Chips</th>
+                <th>Boons</th>
+                <th>T-Pick</th>
+                <th>Trump</th>
+                <th>Out</th>
+                <th>Adjust Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lobby.players.map((p) => (
+                <tr key={p.id}>
+                  <td style={{ color: "var(--text)", fontWeight: 500 }}>{p.name}</td>
+                  <td style={{ color: "var(--green)", fontVariantNumeric: "tabular-nums" }}>{p.points}</td>
+                  <td style={{ fontVariantNumeric: "tabular-nums" }}>{p.chips}</td>
+                  <td style={{ color: "var(--blue-light)" }}>{p.boons}</td>
+                  <td>{lobby.players.find((x) => x.id === p.texasTPick)?.name || "—"}</td>
+                  <td>{p.hasTrumpCard ? "🃏" : ""}</td>
+                  <td>{p.eliminated ? "Yes" : "No"}</td>
+                  <td>
+                    <button onClick={() => adjustPoints(p.id, 1)}>+1</button>
+                    <button onClick={() => adjustPoints(p.id, -1)}>-1</button>
+                    <button onClick={() => adjustPoints(p.id, 10)}>+10</button>
+                    <button onClick={() => adjustPoints(p.id, -10)}>-10</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {lobby.status === "complete" && (
-        <section>
-          <h2>Post-Game</h2>
-          <p>End-of-tournament bonuses (Clean Sweep, Double-Cross, Bushwhacked, Showdown) have already been applied to points above.</p>
-          <button onClick={handleDivvyUp}>Divvy Up the Pot</button>
-        </section>
+        <div className="card card-gold" style={{ textAlign: "center" }}>
+          <span className="section-label">Post-Game</span>
+          <p style={{ marginBottom: 14 }}>
+            End-of-tournament bonuses (Clean Sweep, Double-Cross, Bushwhacked, Showdown) have been applied.
+          </p>
+          <button className="btn-gold" onClick={handleDivvyUp}>Divvy Up the Pot</button>
+        </div>
       )}
     </div>
   );
@@ -134,17 +130,17 @@ function MatchResultControl({ match, onReport }) {
   const [stocks, setStocks] = useState(1);
 
   return (
-    <div className="card match-control">
-      <p>Round {match.round}</p>
-      <label>Winner's remaining stocks: </label>
+    <div className="match-control" style={{ marginBottom: 14, padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
+      <span style={{ fontFamily: "var(--font-d)", fontSize: "0.85rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text)" }}>
+        R{match.round}: {match.playerAName} vs {match.playerBName}
+      </span>
+      <label style={{ fontSize: "0.75rem", color: "var(--text-dim)" }}>Stocks left:</label>
       <input
-        type="number"
-        min={0}
-        value={stocks}
+        type="number" min={0} value={stocks}
         onChange={(e) => setStocks(e.target.value)}
         style={{ width: 60, display: "inline-block" }}
       />
-      <button onClick={() => onReport(match.id, match.playerA, stocks)}>
+      <button onClick={() => onReport(match.id, match.playerA, stocks)} style={{ marginRight: 6 }}>
         {match.playerAName} wins
       </button>
       <button onClick={() => onReport(match.id, match.playerB, stocks)}>
@@ -174,89 +170,48 @@ function SettingsEditor({ lobby, playerId }) {
   }
 
   return (
-    <section className="card">
-      <h2>Tournament Settings (edit before starting)</h2>
-      <div>
-        <label>Ante Up amount: </label>
-        <input
-          type="number"
-          value={settings.anteAmount}
-          onChange={(e) => setSettings({ ...settings, anteAmount: Number(e.target.value) })}
-          style={{ width: 80, display: "inline-block" }}
-        />
+    <div className="card">
+      <span className="section-label">Tournament Settings</span>
+
+      <h3>Economy</h3>
+      <div className="settings-row">
+        <label>Ante Up amount</label>
+        <input type="number" value={settings.anteAmount} onChange={(e) => setSettings({ ...settings, anteAmount: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
       </div>
-      <div>
-        <label>Starting Chips: </label>
-        <input
-          type="number"
-          value={settings.startingChips}
-          onChange={(e) => setSettings({ ...settings, startingChips: Number(e.target.value) })}
-          style={{ width: 80, display: "inline-block" }}
-        />
+      <div className="settings-row">
+        <label>Starting Chips</label>
+        <input type="number" value={settings.startingChips} onChange={(e) => setSettings({ ...settings, startingChips: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
       </div>
-      <div>
-        <label>Starting Boons: </label>
-        <input
-          type="number"
-          value={settings.startingBoons}
-          onChange={(e) => setSettings({ ...settings, startingBoons: Number(e.target.value) })}
-          style={{ width: 80, display: "inline-block" }}
-        />
+      <div className="settings-row">
+        <label>Starting Boons</label>
+        <input type="number" value={settings.startingBoons} onChange={(e) => setSettings({ ...settings, startingBoons: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
       </div>
 
-      <h3>Stock Pool (payout multipliers per remaining-stock slot)</h3>
+      <h3>Stock Pool — Payout Multipliers</h3>
       {settings.stockPool.map((s, idx) => (
-        <div key={idx}>
-          <label>Stocks: </label>
-          <input
-            type="number"
-            value={s.stocks}
-            onChange={(e) => updateStockSlot(idx, "stocks", e.target.value)}
-            style={{ width: 60, display: "inline-block" }}
-          />
-          <label> Multiplier: </label>
-          <input
-            type="number"
-            value={s.multiplier}
-            onChange={(e) => updateStockSlot(idx, "multiplier", e.target.value)}
-            style={{ width: 60, display: "inline-block" }}
-          />
+        <div className="settings-row" key={idx}>
+          <label>Stocks</label>
+          <input type="number" value={s.stocks} onChange={(e) => updateStockSlot(idx, "stocks", e.target.value)} style={{ width: 60, display: "inline-block" }} />
+          <label style={{ minWidth: 80 }}>Multiplier</label>
+          <input type="number" value={s.multiplier} onChange={(e) => updateStockSlot(idx, "multiplier", e.target.value)} style={{ width: 60, display: "inline-block" }} />
         </div>
       ))}
 
-      <h3>Bonus/Penalty Points</h3>
-      <div>
-        <label>Clean Sweep: </label>
-        <input
-          type="number"
-          value={settings.bonusPoints.cleanSweep}
-          onChange={(e) => updateBonus("cleanSweep", e.target.value)}
-          style={{ width: 70, display: "inline-block" }}
-        />
-        <label> Double-Cross: </label>
-        <input
-          type="number"
-          value={settings.bonusPoints.doubleCross}
-          onChange={(e) => updateBonus("doubleCross", e.target.value)}
-          style={{ width: 70, display: "inline-block" }}
-        />
-        <label> Bushwhacked: </label>
-        <input
-          type="number"
-          value={settings.bonusPoints.bushwhacked}
-          onChange={(e) => updateBonus("bushwhacked", e.target.value)}
-          style={{ width: 70, display: "inline-block" }}
-        />
-        <label> Showdown: </label>
-        <input
-          type="number"
-          value={settings.bonusPoints.showdown}
-          onChange={(e) => updateBonus("showdown", e.target.value)}
-          style={{ width: 70, display: "inline-block" }}
-        />
+      <h3>Bonus / Penalty Points</h3>
+      <div className="settings-row">
+        <label>Clean Sweep</label>
+        <input type="number" value={settings.bonusPoints.cleanSweep} onChange={(e) => updateBonus("cleanSweep", e.target.value)} style={{ width: 70, display: "inline-block" }} />
+        <label style={{ minWidth: 100 }}>Double-Cross</label>
+        <input type="number" value={settings.bonusPoints.doubleCross} onChange={(e) => updateBonus("doubleCross", e.target.value)} style={{ width: 70, display: "inline-block" }} />
+      </div>
+      <div className="settings-row">
+        <label>Bushwhacked</label>
+        <input type="number" value={settings.bonusPoints.bushwhacked} onChange={(e) => updateBonus("bushwhacked", e.target.value)} style={{ width: 70, display: "inline-block" }} />
+        <label style={{ minWidth: 100 }}>Showdown</label>
+        <input type="number" value={settings.bonusPoints.showdown} onChange={(e) => updateBonus("showdown", e.target.value)} style={{ width: 70, display: "inline-block" }} />
       </div>
 
-      <button onClick={save}>Save Settings</button>
-    </section>
+      <button className="btn-gold" onClick={save} style={{ marginTop: 8 }}>Save Settings</button>
+    </div>
   );
 }
