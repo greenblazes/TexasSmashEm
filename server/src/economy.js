@@ -10,6 +10,7 @@ export const DEFAULTS = {
   buyBoonsAmount: 2,
   cowFeedBase: 10,         // chips given to every spectator after each match
   cowFeedBonusMultiplier: 20, // bonus pool = this × number of spectators, split among correct predictors
+  turnDurationMs: 30000,   // ms each player has to place boons/bets before their turn auto-advances
   // 6 Stock Pool slots representing possible remaining-stock counts at match end,
   // and the multiplier printed on that slot. Exact printed values aren't in the
   // text rules, so these are reasonable defaults the host can edit in Admin.

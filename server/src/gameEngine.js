@@ -74,7 +74,107 @@ export function buyBoons(lobby, playerId) {
   player.boons += buyBoonsAmount;
 }
 
+// ── Pre-bet phase helpers ─────────────────────────────────────────────────────
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function initMatchPreBet(lobby, matchId) {
+  const match = findMatch(lobby.bracket, matchId);
+  if (!match || match.status !== "ready") return;
+  if (lobby.matchPreBet[matchId]) return; // already initialised
+
+  const participants = participantIds(match);
+  const spectatorOrder = shuffle(
+    lobby.players.filter((p) => !participants.includes(p.id)).map((p) => p.id)
+  );
+
+  lobby.matchPreBet[matchId] = {
+    phase: "participants", // participants | spectators | complete
+    turnDurationMs: lobby.settings.turnDurationMs,
+    deadline: Date.now() + lobby.settings.turnDurationMs,
+    participants,
+    sealedBoons: {}, // participantId -> amount (hidden from broadcast until revealed)
+    spectatorOrder,
+    currentTurnIdx: 0,
+    turnActions: {}, // spectatorId -> { boons: {targetId: n}, bet: null, rideDouble: null }
+  };
+}
+
+// Returns true when both participants have submitted (caller should reveal immediately).
+export function submitParticipantBoons(lobby, matchId, playerId, amount) {
+  const preBet = lobby.matchPreBet[matchId];
+  if (!preBet || preBet.phase !== "participants") throw new Error("Not in participant boon phase");
+  if (!preBet.participants.includes(playerId)) throw new Error("Only match participants can submit in this phase");
+  if (playerId in preBet.sealedBoons) throw new Error("Already submitted");
+
+  const player = lobby.players.find((p) => p.id === playerId);
+  if (!player) throw new Error("Player not found");
+  const qty = Number(amount);
+  if (!Number.isInteger(qty) || qty < 0) throw new Error("Amount must be a non-negative integer");
+  if (qty > 0 && player.boons < qty) throw new Error("Not enough boons");
+  if (qty > 0) player.boons -= qty;
+
+  preBet.sealedBoons[playerId] = qty;
+  return preBet.participants.every((id) => id in preBet.sealedBoons);
+}
+
+export function revealAndStartSpectators(lobby, matchId) {
+  const preBet = lobby.matchPreBet[matchId];
+  if (!preBet || preBet.phase !== "participants") return;
+
+  // Merge sealed boons into public boonPlacements
+  for (const [participantId, qty] of Object.entries(preBet.sealedBoons)) {
+    if (qty > 0) {
+      if (!lobby.boonPlacements[matchId]) lobby.boonPlacements[matchId] = {};
+      lobby.boonPlacements[matchId][participantId] = (lobby.boonPlacements[matchId][participantId] || 0) + qty;
+    }
+  }
+
+  if (preBet.spectatorOrder.length === 0) {
+    preBet.phase = "complete";
+    return;
+  }
+
+  preBet.phase = "spectators";
+  preBet.currentTurnIdx = 0;
+  preBet.deadline = Date.now() + preBet.turnDurationMs;
+}
+
+// Returns true when all spectator turns are done.
+export function advanceSpectatorTurn(lobby, matchId) {
+  const preBet = lobby.matchPreBet[matchId];
+  if (!preBet || preBet.phase !== "spectators") return true;
+
+  preBet.currentTurnIdx += 1;
+  if (preBet.currentTurnIdx >= preBet.spectatorOrder.length) {
+    preBet.phase = "complete";
+    return true;
+  }
+
+  preBet.deadline = Date.now() + preBet.turnDurationMs;
+  return false;
+}
+
+export function spectatorDone(lobby, matchId, playerId) {
+  const preBet = lobby.matchPreBet[matchId];
+  if (!preBet || preBet.phase !== "spectators") throw new Error("Not in spectator turn phase");
+  const current = preBet.spectatorOrder[preBet.currentTurnIdx];
+  if (playerId !== current) throw new Error("It is not your turn");
+  return advanceSpectatorTurn(lobby, matchId);
+}
+
+// ── Match start ───────────────────────────────────────────────────────────────
+
 export function startMatch(lobby, matchId) {
+  const preBet = lobby.matchPreBet[matchId];
+  if (preBet && preBet.phase !== "complete") throw new Error("Pre-match betting has not concluded yet");
   const match = findMatch(lobby.bracket, matchId);
   if (!match) throw new Error("Match not found");
   bracketStartMatch(lobby.bracket, matchId);
@@ -86,18 +186,31 @@ export function placeBoon(lobby, playerId, matchId, targetParticipantId, amount)
   const match = findMatch(lobby.bracket, matchId);
   if (!match) throw new Error("Match not found");
   if (match.status !== "ready") throw new Error("Match is not open for boons");
-  const participants = participantIds(match);
-  if (!participants.includes(targetParticipantId)) {
-    throw new Error("Boon target must be a match participant");
+
+  const preBet = lobby.matchPreBet[matchId];
+  if (preBet) {
+    if (preBet.phase !== "spectators") throw new Error(
+      preBet.phase === "participants"
+        ? "Participants are placing boons — spectator turns haven't started yet"
+        : "Pre-match betting is closed"
+    );
+    if (preBet.spectatorOrder[preBet.currentTurnIdx] !== playerId) throw new Error("It is not your turn");
   }
+
+  const participants = participantIds(match);
+  if (!participants.includes(targetParticipantId)) throw new Error("Boon target must be a match participant");
   const qty = Number(amount);
   if (!Number.isInteger(qty) || qty <= 0) throw new Error("Boon amount must be a positive integer");
   if (player.boons < qty) throw new Error("Not enough boons");
 
   player.boons -= qty;
   if (!lobby.boonPlacements[matchId]) lobby.boonPlacements[matchId] = {};
-  const placements = lobby.boonPlacements[matchId];
-  placements[targetParticipantId] = (placements[targetParticipantId] || 0) + qty;
+  lobby.boonPlacements[matchId][targetParticipantId] = (lobby.boonPlacements[matchId][targetParticipantId] || 0) + qty;
+
+  if (preBet) {
+    if (!preBet.turnActions[playerId]) preBet.turnActions[playerId] = { boons: {}, bet: null, rideDouble: null };
+    preBet.turnActions[playerId].boons[targetParticipantId] = (preBet.turnActions[playerId].boons[targetParticipantId] || 0) + qty;
+  }
 }
 
 export function getMatchHandicap(lobby, matchId) {
@@ -119,23 +232,30 @@ export function placeStockBet(lobby, playerId, matchId, stocks, wager) {
   const match = findMatch(lobby.bracket, matchId);
   if (!match) throw new Error("Match not found");
   if (match.status !== "ready") throw new Error("Match is not open for Stock Bets");
+
+  const preBet = lobby.matchPreBet[matchId];
+  if (preBet) {
+    if (preBet.phase !== "spectators") throw new Error(
+      preBet.phase === "participants" ? "Spectator turns haven't started yet" : "Pre-match betting is closed"
+    );
+    if (preBet.spectatorOrder[preBet.currentTurnIdx] !== playerId) throw new Error("It is not your turn");
+  }
+
   const slot = lobby.settings.stockPool.find((s) => s.stocks === Number(stocks));
   if (!slot) throw new Error("Invalid Stock Pool slot");
   const amount = Number(wager);
   if (!Number.isInteger(amount) || amount <= 0) throw new Error("Wager must be a positive integer");
   if (player.chips < amount) throw new Error("Not enough chips");
-
   if (!lobby.stockBets[matchId]) lobby.stockBets[matchId] = [];
-  const existing = lobby.stockBets[matchId].find((b) => b.stocks === Number(stocks));
-  if (existing) throw new Error("Someone already holds that Stock Pool slot for this match");
+  if (lobby.stockBets[matchId].find((b) => b.stocks === Number(stocks))) throw new Error("Someone already holds that slot");
 
   player.chips -= amount;
-  lobby.stockBets[matchId].push({
-    playerId,
-    stocks: Number(stocks),
-    wager: amount,
-    riders: [],
-  });
+  lobby.stockBets[matchId].push({ playerId, stocks: Number(stocks), wager: amount, riders: [] });
+
+  if (preBet) {
+    if (!preBet.turnActions[playerId]) preBet.turnActions[playerId] = { boons: {}, bet: null, rideDouble: null };
+    preBet.turnActions[playerId].bet = { stocks: Number(stocks), wager: amount };
+  }
 }
 
 export function rideDouble(lobby, playerId, matchId, stocks) {
@@ -144,12 +264,26 @@ export function rideDouble(lobby, playerId, matchId, stocks) {
   if (!player.eliminated) throw new Error("Only eliminated players may Ride Double");
   if (player.chips > 0) throw new Error("Riding Double requires having no chips");
   const rideMatch = findMatch(lobby.bracket, matchId);
-  if (rideMatch && rideMatch.status !== "ready") throw new Error("Match has already started — bets are locked");
+  if (!rideMatch || rideMatch.status !== "ready") throw new Error("Match has already started — bets are locked");
+
+  const preBet = lobby.matchPreBet[matchId];
+  if (preBet) {
+    if (preBet.phase !== "spectators") throw new Error(
+      preBet.phase === "participants" ? "Spectator turns haven't started yet" : "Pre-match betting is closed"
+    );
+    if (preBet.spectatorOrder[preBet.currentTurnIdx] !== playerId) throw new Error("It is not your turn");
+  }
+
   const bets = lobby.stockBets[matchId] || [];
   const bet = bets.find((b) => b.stocks === Number(stocks));
   if (!bet) throw new Error("No Stock Bet on that slot");
   if (bet.riders.length >= 1) throw new Error("That bet already has a rider stacked on it");
   bet.riders.push(playerId);
+
+  if (preBet) {
+    if (!preBet.turnActions[playerId]) preBet.turnActions[playerId] = { boons: {}, bet: null, rideDouble: null };
+    preBet.turnActions[playerId].rideDouble = { stocks: Number(stocks) };
+  }
 }
 
 export function playTrumpCard(lobby, playerId, matchId, targetParticipantId) {
@@ -238,6 +372,7 @@ export function reportMatchResult(lobby, matchId, winnerId, remainingStocks) {
     }
   }
   delete lobby.stockBets[matchId];
+  delete lobby.matchPreBet[matchId];
 
   if (isTournamentComplete(lobby.bracket)) {
     lobby.status = "complete";

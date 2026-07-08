@@ -65,16 +65,27 @@ export default function Admin() {
           {readyMatches.length > 0 && (
             <div className="card card-blue">
               <span className="section-label">Matches Ready to Start</span>
-              {readyMatches.map((m) => (
-                <div key={m.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                  <span style={{ color: "var(--text)", fontWeight: 500 }}>
-                    {m.playerAName} <span style={{ color: "var(--text-dim)" }}>vs</span> {m.playerBName}
-                  </span>
-                  <button className="btn-gold" onClick={() => startMatch(m.id)}>
-                    Start Match
-                  </button>
-                </div>
-              ))}
+              {readyMatches.map((m) => {
+                const preBet = lobby.matchPreBet?.[m.id];
+                const phase = preBet?.phase ?? "complete";
+                const canStart = phase === "complete";
+                const phaseLabel = phase === "participants" ? "Sealed boon phase" : phase === "spectators" ? `Spectator turn ${(preBet.currentTurnIdx ?? 0) + 1} of ${preBet.spectatorOrder.length}` : "Betting closed";
+                return (
+                  <div key={m.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div>
+                      <div style={{ color: "var(--text)", fontWeight: 500 }}>
+                        {m.playerAName} <span style={{ color: "var(--text-dim)" }}>vs</span> {m.playerBName}
+                      </div>
+                      <div style={{ fontSize: "0.7rem", color: canStart ? "var(--green)" : "var(--gold)", marginTop: 2 }}>
+                        {phaseLabel}
+                      </div>
+                    </div>
+                    <button className="btn-gold" onClick={() => startMatch(m.id)} disabled={!canStart} style={{ opacity: canStart ? 1 : 0.4, cursor: canStart ? "pointer" : "not-allowed" }}>
+                      Start Match
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -208,6 +219,12 @@ function SettingsEditor({ lobby, playerId }) {
       <div className="settings-row">
         <label>Starting Boons</label>
         <input type="number" value={settings.startingBoons} onChange={(e) => setSettings({ ...settings, startingBoons: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
+      </div>
+
+      <h3>Pre-Match Betting</h3>
+      <div className="settings-row">
+        <label>Turn duration (seconds)</label>
+        <input type="number" value={settings.turnDurationMs / 1000} onChange={(e) => setSettings({ ...settings, turnDurationMs: Number(e.target.value) * 1000 })} style={{ width: 80, display: "inline-block" }} />
       </div>
 
       <h3>Cow Feed</h3>

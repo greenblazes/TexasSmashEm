@@ -56,6 +56,7 @@ export function createLobby(hostName) {
       buyBoonsAmount: DEFAULTS.buyBoonsAmount,
       cowFeedBase: DEFAULTS.cowFeedBase,
       cowFeedBonusMultiplier: DEFAULTS.cowFeedBonusMultiplier,
+      turnDurationMs: DEFAULTS.turnDurationMs,
       stockPool: DEFAULTS.stockPool.map((s) => ({ ...s })),
       bonusPoints: { ...DEFAULTS.bonusPoints },
     },
@@ -63,6 +64,7 @@ export function createLobby(hostName) {
     firstMatchCompleted: false,
     boonPlacements: {}, // matchId -> { participantId: totalBoonsPlaced }
     stockBets: {}, // matchId -> [{ playerId, stocks, wager, riders: [] }]
+    matchPreBet: {}, // matchId -> pre-bet phase state
     champion: null,
   };
   lobbies.set(code, lobby);
