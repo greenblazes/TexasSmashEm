@@ -48,7 +48,7 @@ const SECTIONS = [
       },
       {
         title: "Trump Card",
-        body: "The winner of the first match of the tournament receives the Trump Card. Play it on any player in any future match to add a massive Boon handicap on them.",
+        body: "The loser of the first match of the tournament receives the Trump Card. Play it at any time before a round starts to remove all Boons currently placed on a player.",
       },
     ],
   },
