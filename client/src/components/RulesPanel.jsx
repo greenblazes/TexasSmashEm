@@ -77,7 +77,7 @@ const SECTIONS = [
       },
       {
         title: "Double-Cross",
-        body: "If your T-Pick wins the tournament but you bet against them in at least one match prediction, you earn +30 bonus points.",
+        body: "Awarded at the end of the tournament to any player who went up against their own Texas T-Pick in a match and won. Beating the person you predicted to win the whole tournament earns you bonus points.",
       },
       {
         title: "Bushwhacked",
