@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useLobby } from "../lib/LobbyContext.jsx";
 import { emitAck } from "../lib/socket.js";
 import Bracket from "./Bracket.jsx";
+import ChipIcon from "../components/ChipIcon.jsx";
 import RoundActions from "./RoundActions.jsx";
 
 function TexasTPickSelector({ lobby, me, playerId }) {
@@ -74,7 +75,7 @@ export default function Lobby() {
         <div className="page-header-right">
           {me && (
             <div className="chip-pill">
-              <div className="chip-icon" />
+              <ChipIcon size={22} className="chip-icon" />
               <span className="chip-value">{me.chips ?? 0}</span>
             </div>
           )}

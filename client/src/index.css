@@ -270,13 +270,8 @@ select {
 }
 
 .chip-icon {
-  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
-  background: conic-gradient(
-    #D4A832 0deg 40deg, #0A0815 40deg 80deg, #D4A832 80deg 120deg, #0A0815 120deg 160deg,
-    #D4A832 160deg 200deg, #0A0815 200deg 240deg, #D4A832 240deg 280deg, #0A0815 280deg 320deg,
-    #D4A832 320deg 360deg
-  );
-  border: 2px solid #D4A832; box-shadow: 0 0 7px rgba(212,168,50,0.5);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 5px rgba(212,168,50,0.5));
   animation: chip-spin 9s linear infinite;
 }
 
