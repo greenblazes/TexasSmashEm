@@ -73,7 +73,7 @@ const SECTIONS = [
       },
       {
         title: "Clean Sweep",
-        body: "If a player wins every match they play without losing a single stock, they earn +50 bonus points at the end of the tournament.",
+        body: "Awarded at the end of the tournament to any player who correctly predicted the winner of every single match. Matches you played in yourself don't count — but every other match must have a correct prediction. Missing a prediction disqualifies you.",
       },
       {
         title: "Double-Cross",

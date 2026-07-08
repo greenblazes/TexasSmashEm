@@ -244,9 +244,11 @@ function applyEndOfTournamentBonuses(lobby) {
   const finalMatch = lobby.bracket.rounds[lobby.bracket.rounds.length - 1][0];
 
   for (const player of lobby.players) {
-    // Clean Sweep: correctly predicted every match they were eligible to predict.
+    // Clean Sweep: correctly predicted the winner of every single match in the tournament.
+    // Matches the player participated in are excluded (can't predict your own match).
+    // Skipping a prediction for any eligible match disqualifies the player.
     const eligibleMatches = allMatches.filter(
-      (m) => m.playerA !== player.id && m.playerB !== player.id && m.id in player.matchPredictions
+      (m) => m.playerA !== player.id && m.playerB !== player.id
     );
     if (eligibleMatches.length > 0) {
       const allCorrect = eligibleMatches.every(
