@@ -11,7 +11,7 @@ export default function RoundActions({ lobby, me, playerId }) {
 
   if (!lobby.bracket || !me) return null;
 
-  const readyMatches = lobby.bracket.rounds.flat().filter((m) => m.status === "ready");
+  const allActiveMatches = lobby.bracket.rounds.flat().filter((m) => m.status === "ready" || m.status === "in_progress");
   const isParticipant = (m) => m.playerA === playerId || m.playerB === playerId;
 
   async function run(event, payload) {
@@ -53,19 +53,42 @@ export default function RoundActions({ lobby, me, playerId }) {
         </div>
       )}
 
-      {readyMatches.map((match) => (
-        <MatchActions
-          key={match.id}
-          lobby={lobby}
-          match={match}
-          me={me}
-          playerId={playerId}
-          isParticipant={isParticipant(match)}
-          run={run}
-        />
+      {allActiveMatches.map((match) => (
+        match.status === "in_progress"
+          ? <MatchLocked key={match.id} match={match} lobby={lobby} isParticipant={isParticipant(match)} />
+          : <MatchActions key={match.id} lobby={lobby} match={match} me={me} playerId={playerId} isParticipant={isParticipant(match)} run={run} />
       ))}
 
       {error && <p className="error">{error}</p>}
+    </div>
+  );
+}
+
+function MatchLocked({ match, lobby, isParticipant }) {
+  const handicap = matchHandicap(lobby, match);
+  return (
+    <div className="card card-red">
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span className="live-dot" />
+        <span style={{ fontSize: "0.7rem", letterSpacing: "0.14em", color: "var(--red)", fontWeight: 600, textTransform: "uppercase" }}>
+          Match In Progress
+        </span>
+      </div>
+      <div className="vs-banner">
+        <span className="vs-name" style={{ color: isParticipant && match.playerA === match.playerA ? "var(--blue-light)" : "var(--blue-light)" }}>{match.playerAName}</span>
+        <span className="vs-sep">VS</span>
+        <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
+      </div>
+      {handicap.percent > 0 && (
+        <p style={{ marginTop: 10, color: "var(--text-mid)", fontSize: "0.85rem" }}>
+          Handicap: <span style={{ color: "var(--red)" }}>
+            {match.playerAName === lobby.players.find(p => p.id === handicap.handicappedPlayerId)?.name ? match.playerAName : match.playerBName} +{handicap.percent}% dmg
+          </span>
+        </p>
+      )}
+      <p style={{ marginTop: 10, fontSize: "0.8rem", color: "var(--text-dim)" }}>
+        Boons, bets, and Trump Card are locked for this match.
+      </p>
     </div>
   );
 }

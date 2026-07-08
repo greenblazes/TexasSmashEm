@@ -1,4 +1,4 @@
-import { buildBracket, reportResult as bracketReportResult, isTournamentComplete, getChampion } from "./bracket.js";
+import { buildBracket, startMatch as bracketStartMatch, reportResult as bracketReportResult, isTournamentComplete, getChampion } from "./bracket.js";
 import { boonHandicapPercent, cowFeed } from "./economy.js";
 
 function findMatch(bracket, matchId) {
@@ -74,6 +74,12 @@ export function buyBoons(lobby, playerId) {
   player.boons += buyBoonsAmount;
 }
 
+export function startMatch(lobby, matchId) {
+  const match = findMatch(lobby.bracket, matchId);
+  if (!match) throw new Error("Match not found");
+  bracketStartMatch(lobby.bracket, matchId);
+}
+
 export function placeBoon(lobby, playerId, matchId, targetParticipantId, amount) {
   const player = lobby.players.find((p) => p.id === playerId);
   if (!player) throw new Error("Player not found");
@@ -137,6 +143,8 @@ export function rideDouble(lobby, playerId, matchId, stocks) {
   if (!player) throw new Error("Player not found");
   if (!player.eliminated) throw new Error("Only eliminated players may Ride Double");
   if (player.chips > 0) throw new Error("Riding Double requires having no chips");
+  const rideMatch = findMatch(lobby.bracket, matchId);
+  if (rideMatch && rideMatch.status !== "ready") throw new Error("Match has already started — bets are locked");
   const bets = lobby.stockBets[matchId] || [];
   const bet = bets.find((b) => b.stocks === Number(stocks));
   if (!bet) throw new Error("No Stock Bet on that slot");
@@ -150,6 +158,7 @@ export function playTrumpCard(lobby, playerId, matchId, targetParticipantId) {
   if (!player.hasTrumpCard) throw new Error("Player does not hold the Trump Card");
   const match = findMatch(lobby.bracket, matchId);
   if (!match) throw new Error("Match not found");
+  if (match.status !== "ready") throw new Error("Match has already started — Trump Card must be played before the match begins");
   if (!participantIds(match).includes(targetParticipantId)) {
     throw new Error("Trump Card target must be a match participant");
   }

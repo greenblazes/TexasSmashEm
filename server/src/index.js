@@ -11,6 +11,7 @@ import {
 } from "./lobbyStore.js";
 import {
   startTournament,
+  startMatch,
   setTexasTPick,
   setMatchPrediction,
   buyBoons,
@@ -272,6 +273,18 @@ io.on("connection", (socket) => {
     try {
       const lobby = getLobby(code);
       playTrumpCard(lobby, playerId, matchId, targetParticipantId);
+      ack?.({ ok: true });
+      broadcastLobby(code);
+    } catch (err) {
+      ack?.({ ok: false, error: err.message });
+    }
+  });
+
+  socket.on("host:startMatch", ({ code, playerId, matchId }, ack) => {
+    try {
+      const lobby = getLobby(code);
+      requireHost(lobby, playerId);
+      startMatch(lobby, matchId);
       ack?.({ ok: true });
       broadcastLobby(code);
     } catch (err) {

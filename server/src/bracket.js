@@ -142,10 +142,18 @@ export function advanceWinner(bracket, match) {
   }
 }
 
+export function startMatch(bracket, matchId) {
+  const match = findMatchById(bracket, matchId);
+  if (!match) throw new Error("Match not found");
+  if (match.status !== "ready") throw new Error("Match is not in the ready state");
+  match.status = "in_progress";
+  return match;
+}
+
 export function reportResult(bracket, matchId, winnerId) {
   const match = findMatchById(bracket, matchId);
   if (!match) throw new Error("Match not found");
-  if (match.status !== "ready") throw new Error("Match is not ready to report");
+  if (match.status !== "in_progress") throw new Error("Match has not been started yet");
   if (winnerId !== match.playerA && winnerId !== match.playerB) {
     throw new Error("Winner must be one of the two match participants");
   }

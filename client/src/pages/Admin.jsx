@@ -16,6 +16,11 @@ export default function Admin() {
 
   if (!lobby || !isHost) return <div className="page"><p>Loading…</p></div>;
 
+  async function startMatch(matchId) {
+    const res = await emitAck("host:startMatch", { code: lobby.code, playerId, matchId });
+    if (!res.ok) alert(res.error);
+  }
+
   async function reportResult(matchId, winnerId, remainingStocks) {
     const res = await emitAck("host:reportResult", {
       code: lobby.code, playerId, matchId, winnerId,
@@ -35,7 +40,9 @@ export default function Admin() {
     else alert("Pot divvied up — chip totals updated.");
   }
 
-  const readyMatches = lobby.bracket?.rounds.flat().filter((m) => m.status === "ready") || [];
+  const allMatches = lobby.bracket?.rounds.flat() || [];
+  const readyMatches = allMatches.filter((m) => m.status === "ready");
+  const inProgressMatches = allMatches.filter((m) => m.status === "in_progress");
 
   return (
     <div className="page">
@@ -56,12 +63,28 @@ export default function Admin() {
       {lobby.bracket && (
         <>
           {readyMatches.length > 0 && (
+            <div className="card card-blue">
+              <span className="section-label">Matches Ready to Start</span>
+              {readyMatches.map((m) => (
+                <div key={m.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                  <span style={{ color: "var(--text)", fontWeight: 500 }}>
+                    {m.playerAName} <span style={{ color: "var(--text-dim)" }}>vs</span> {m.playerBName}
+                  </span>
+                  <button className="btn-gold" onClick={() => startMatch(m.id)}>
+                    Start Match
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {inProgressMatches.length > 0 && (
             <div className="card card-red">
               <span className="section-label">
                 <span className="live-dot" />
-                Matches Awaiting Result
+                Match In Progress — Report Result
               </span>
-              {readyMatches.map((m) => (
+              {inProgressMatches.map((m) => (
                 <MatchResultControl key={m.id} match={m} onReport={reportResult} />
               ))}
             </div>
