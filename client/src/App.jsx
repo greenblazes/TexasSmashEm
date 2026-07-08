@@ -13,7 +13,7 @@ export default function App() {
       <RulesPanel />
       <Routes>
         <Route path="/super-admin" element={<SuperAdmin />} />
-        <Route path="/test" element={<TestBed />} />
+        <Route path="/style" element={<TestBed />} />
         <Route
           path="*"
           element={

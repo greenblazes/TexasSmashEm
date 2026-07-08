@@ -4,6 +4,7 @@
  * No server connection required.
  */
 import React, { useState } from "react";
+import ChipIcon from "../components/ChipIcon.jsx";
 import { Link } from "react-router-dom";
 import RoundActions from "./RoundActions.jsx";
 import Bracket from "./Bracket.jsx";
@@ -238,7 +239,7 @@ function PillsSection() {
     <Section id="pills" label="Pills & Badges">
       <Row gap={10}>
         <span className="chip-pill">
-          <span className="chip-icon" />
+          <ChipIcon size={22} className="chip-icon" />
           <span className="chip-value">850</span>
         </span>
         <span className="trump-pill">🃏 Trump Card</span>
