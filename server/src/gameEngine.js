@@ -185,16 +185,21 @@ export function reportMatchResult(lobby, matchId, winnerId, remainingStocks) {
   }
   lobby.firstMatchCompleted = true;
 
-  // Cow Feed: pay everyone (excluding match participants) who predicted this match's winner.
-  const predictors = lobby.players.filter(
-    (p) => p.id !== match.playerA && p.id !== match.playerB && match.id in p.matchPredictions
+  // Cow Feed: base chips to all spectators, bonus pool split among correct predictors.
+  const spectators = lobby.players.filter(
+    (p) => p.id !== match.playerA && p.id !== match.playerB
   );
-  const correct = predictors.filter((p) => p.matchPredictions[match.id] === winnerId);
-  const incorrect = predictors.filter((p) => p.matchPredictions[match.id] !== winnerId);
-  if (correct.length > 0) {
-    const payout = cowFeed(correct.length, incorrect.length);
-    for (const p of correct) p.chips += payout;
-  }
+  const correct = spectators.filter(
+    (p) => match.id in p.matchPredictions && p.matchPredictions[match.id] === winnerId
+  );
+  const { base, bonus } = cowFeed(
+    spectators.length,
+    correct.length,
+    lobby.settings.cowFeedBase,
+    lobby.settings.cowFeedBonusMultiplier
+  );
+  for (const p of spectators) p.chips += base;
+  for (const p of correct) p.chips += bonus;
 
   // Stock Bets settlement
   const bets = lobby.stockBets[matchId] || [];

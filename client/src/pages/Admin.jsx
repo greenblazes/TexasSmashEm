@@ -187,6 +187,16 @@ function SettingsEditor({ lobby, playerId }) {
         <input type="number" value={settings.startingBoons} onChange={(e) => setSettings({ ...settings, startingBoons: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
       </div>
 
+      <h3>Cow Feed</h3>
+      <div className="settings-row">
+        <label>Base chips (all spectators)</label>
+        <input type="number" value={settings.cowFeedBase} onChange={(e) => setSettings({ ...settings, cowFeedBase: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
+      </div>
+      <div className="settings-row">
+        <label>Bonus multiplier (× spectator count)</label>
+        <input type="number" value={settings.cowFeedBonusMultiplier} onChange={(e) => setSettings({ ...settings, cowFeedBonusMultiplier: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
+      </div>
+
       <h3>Stock Pool — Payout Multipliers</h3>
       {settings.stockPool.map((s, idx) => (
         <div className="settings-row" key={idx}>

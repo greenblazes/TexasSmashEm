@@ -40,7 +40,7 @@ const SECTIONS = [
       },
       {
         title: "Cow Feed",
-        body: "Payout for correct predictions. Formula: max(20, 10 × (wrong − right)² + 20) chips. The bigger the upset in predictions, the larger the payout.",
+        body: "After every match, every spectator (anyone not in that match) receives a flat base amount of chips. On top of that, a bonus pool is split equally among spectators who correctly predicted the winner — the fewer people who guessed right, the bigger the bonus each correct predictor earns. Both amounts are configurable by the host before the tournament starts.",
       },
       {
         title: "Divvy Up",

@@ -54,6 +54,8 @@ export function createLobby(hostName) {
       anteAmount: DEFAULTS.anteAmount,
       buyBoonsCost: DEFAULTS.buyBoonsCost,
       buyBoonsAmount: DEFAULTS.buyBoonsAmount,
+      cowFeedBase: DEFAULTS.cowFeedBase,
+      cowFeedBonusMultiplier: DEFAULTS.cowFeedBonusMultiplier,
       stockPool: DEFAULTS.stockPool.map((s) => ({ ...s })),
       bonusPoints: { ...DEFAULTS.bonusPoints },
     },
