@@ -40,7 +40,7 @@ const SECTIONS = [
       },
       {
         title: "Cow Feed",
-        body: "Payout for correct predictions. Formula: max(20, 10 × (wrong − right)² + 20) chips. The bigger the upset in predictions, the larger the payout.",
+        body: "After every match, every spectator (anyone not in that match) receives a flat base amount of chips. On top of that, a bonus pool is split equally among spectators who correctly predicted the winner — the fewer people who guessed right, the bigger the bonus each correct predictor earns. Both amounts are configurable by the host before the tournament starts.",
       },
       {
         title: "Divvy Up",
@@ -48,7 +48,7 @@ const SECTIONS = [
       },
       {
         title: "Trump Card",
-        body: "The winner of the first match of the tournament receives the Trump Card. Play it on any player in any future match to add a massive Boon handicap on them.",
+        body: "The loser of the first match of the tournament receives the Trump Card. Play it at any time before a round starts to remove all Boons currently placed on a player.",
       },
     ],
   },
@@ -73,19 +73,19 @@ const SECTIONS = [
       },
       {
         title: "Clean Sweep",
-        body: "If a player wins every match they play without losing a single stock, they earn +50 bonus points at the end of the tournament.",
+        body: "Awarded at the end of the tournament to any player who correctly predicted the winner of every single match. Matches you played in yourself don't count — but every other match must have a correct prediction. Missing a prediction disqualifies you.",
       },
       {
         title: "Double-Cross",
-        body: "If your T-Pick wins the tournament but you bet against them in at least one match prediction, you earn +30 bonus points.",
+        body: "Awarded at the end of the tournament to any player who went up against their own Texas T-Pick in a match and won. Beating the person you predicted to win the whole tournament earns you bonus points.",
       },
       {
         title: "Bushwhacked",
-        body: "If you predicted the champion correctly every match but they end up losing the tournament, you lose 30 points.",
+        body: "Awarded at the end of the tournament to any player who went up against their own Texas T-Pick in a match and lost. Getting eliminated by the person you picked to win the whole tournament earns you bonus points.",
       },
       {
         title: "Showdown",
-        body: "If the two players with the most correct match predictions meet in the final, both earn +75 bonus points.",
+        body: "Awarded at the end of the tournament to any player who faced their own Texas T-Pick in the final round and won. Defeating the person you predicted to win the whole tournament in the championship match earns you bonus points.",
       },
     ],
   },

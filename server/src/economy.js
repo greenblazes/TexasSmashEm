@@ -8,6 +8,9 @@ export const DEFAULTS = {
   anteAmount: 50,
   buyBoonsCost: 10, // buys 2 boons
   buyBoonsAmount: 2,
+  cowFeedBase: 10,         // chips given to every spectator after each match
+  cowFeedBonusMultiplier: 20, // bonus pool = this × number of spectators, split among correct predictors
+  turnDurationMs: 30000,   // ms each player has to place boons/bets before their turn auto-advances
   // 6 Stock Pool slots representing possible remaining-stock counts at match end,
   // and the multiplier printed on that slot. Exact printed values aren't in the
   // text rules, so these are reasonable defaults the host can edit in Admin.
@@ -49,13 +52,13 @@ export function boonHandicapPercent(diff) {
   return BOON_DAMAGE_SCALE[diff] ?? 0;
 }
 
-// Cow Feed = (10 * betSpread^2) + 20, min 20.
-// betSpread modeled as the gap between players who predicted wrong vs. right
-// for this match (sign doesn't matter since it's squared) — the doc says it's
-// "calculated dynamically based on the odds created by other players' predictions"
-// but doesn't give the exact spread formula, so this is the closest reasonable
-// reading. Adjust here if the real formula differs.
-export function cowFeed(correctCount, incorrectCount) {
-  const spread = incorrectCount - correctCount;
-  return Math.max(20, 10 * spread * spread + 20);
+// Cow Feed payouts after a match:
+//   base    — flat chips awarded to every spectator (non-participant)
+//   bonus   — pool of (bonusMultiplier × spectatorCount) split evenly among correct predictors
+// Returns { base, bonus } chip amounts. bonus is 0 if no one predicted correctly.
+export function cowFeed(spectatorCount, correctCount, base, bonusMultiplier) {
+  if (spectatorCount === 0) return { base: 0, bonus: 0 };
+  const pool = bonusMultiplier * spectatorCount;
+  const bonus = correctCount > 0 ? Math.floor(pool / correctCount) : 0;
+  return { base, bonus };
 }
