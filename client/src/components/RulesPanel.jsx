@@ -185,7 +185,7 @@ export default function RulesPanel() {
           transition: "right 0.28s cubic-bezier(0.4,0,0.2,1)",
           writingMode: "vertical-rl",
           textOrientation: "mixed",
-          padding: "14px 10px",
+          padding: "10px 6px",
           borderRadius: "8px 0 0 8px",
           background: "linear-gradient(180deg,#D4A832,#9E7A1E)",
           color: "#07050F",
