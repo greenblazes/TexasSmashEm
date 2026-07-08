@@ -85,7 +85,7 @@ const SECTIONS = [
       },
       {
         title: "Showdown",
-        body: "If the two players with the most correct match predictions meet in the final, both earn +75 bonus points.",
+        body: "Awarded at the end of the tournament to any player who faced their own Texas T-Pick in the final round and won. Defeating the person you predicted to win the whole tournament in the championship match earns you bonus points.",
       },
     ],
   },
