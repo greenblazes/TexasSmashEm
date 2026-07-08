@@ -81,7 +81,7 @@ const SECTIONS = [
       },
       {
         title: "Bushwhacked",
-        body: "If you predicted the champion correctly every match but they end up losing the tournament, you lose 30 points.",
+        body: "Awarded at the end of the tournament to any player who went up against their own Texas T-Pick in a match and lost. Getting eliminated by the person you picked to win the whole tournament earns you bonus points.",
       },
       {
         title: "Showdown",
