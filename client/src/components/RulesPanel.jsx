@@ -27,7 +27,7 @@ const SECTIONS = [
                   <tr key={ri}>
                     {row.map(([b, d]) => (
                       <React.Fragment key={b}>
-                        <td style={{ padding: "3px 6px 3px 0", color: "var(--blue-light)", fontWeight: 600 }}>{b} boon{b > 1 ? "s" : ""}</td>
+                        <td style={{ padding: "3px 6px 3px 0", color: "var(--blue-light)", fontWeight: 600 }}>{b}</td>
                         <td style={{ padding: "3px 12px 3px 0", color: "var(--text)" }}>{d}%</td>
                       </React.Fragment>
                     ))}
