@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 const SECTIONS = [
   {
@@ -14,7 +14,29 @@ const SECTIONS = [
       },
       {
         title: "Boons & SMASH Handicap",
-        body: "Place Boons on a player before their match to increase their damage taken. Boon advantage is converted to a % damage bonus using a scale of 1–12 boons → 10–300% extra damage. Participants can also place Boons on themselves.",
+        body: (
+          <>
+            <span>Place Boons on a player before their match to increase their damage taken. The net Boon advantage is converted to extra damage using the scale below. Participants can also place Boons on themselves.</span>
+            <table style={{ marginTop: 10, borderCollapse: "collapse", width: "100%", fontVariantNumeric: "tabular-nums" }}>
+              <tbody>
+                {[[1,10],[2,20],[3,30],[4,40],[5,50],[6,60],[7,80],[8,100],[9,125],[10,150],[11,200],[12,300]].reduce((rows, [b,d], i) => {
+                  if (i % 3 === 0) rows.push([]);
+                  rows[rows.length - 1].push([b, d]);
+                  return rows;
+                }, []).map((row, ri) => (
+                  <tr key={ri}>
+                    {row.map(([b, d]) => (
+                      <React.Fragment key={b}>
+                        <td style={{ padding: "3px 6px 3px 0", color: "var(--blue-light)", fontWeight: 600 }}>{b} boon{b > 1 ? "s" : ""}</td>
+                        <td style={{ padding: "3px 12px 3px 0", color: "var(--text)" }}>{d}%</td>
+                      </React.Fragment>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ),
       },
       {
         title: "Cow Feed",
@@ -179,7 +201,7 @@ export default function RulesPanel() {
                         padding: "0 20px 14px",
                         fontSize: "0.82rem", color: "var(--text-mid)", lineHeight: 1.65,
                       }}>
-                        {rule.body}
+                        {typeof rule.body === "string" ? <span>{rule.body}</span> : rule.body}
                       </div>
                     )}
                   </div>
