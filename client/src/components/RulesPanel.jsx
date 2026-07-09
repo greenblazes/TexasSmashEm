@@ -65,11 +65,11 @@ const SECTIONS = [
       },
       {
         title: "Stock Bets",
-        body: "Eliminated players can bet chips on how many stocks the winner of a match will have remaining. Six multiplier slots (0–5 stocks remaining). Each slot can only be claimed once per match. Win = wager × multiplier.",
+        body: "Optional, and only for eliminated players. On top of your Match Prediction, wager chips on how many stocks that predicted winner will have left when they win: 1, 2, or 3. It pays only if your Match Prediction is correct AND the winner finishes with exactly that many stocks. Win = wager × the slot's multiplier (a flawless 3-stock win pays the most). Each stock slot can be claimed by only one player per match; a wrong bet loses the wager to the pot.",
       },
       {
         title: "Riding Double",
-        body: "If you have no chips left, you can piggyback on another player's Stock Bet. A correct bet splits the winnings: the original bettor keeps ½, you get ⅓, and ⅙ is lost.",
+        body: "If you're eliminated and out of chips, you can piggyback on another player's Stock Bet instead of placing your own. If that bet wins, the winnings are split: the original bettor keeps ½, you get ⅓, and the remainder is lost.",
       },
       {
         title: "Clean Sweep",

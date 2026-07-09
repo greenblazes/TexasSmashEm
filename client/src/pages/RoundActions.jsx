@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { emitAck } from "../lib/socket.js";
 import { matchHandicap } from "../lib/economy.js";
 
@@ -36,27 +36,131 @@ function useCountdown(deadline) {
   return msLeft;
 }
 
-function CountdownBar({ deadline, totalMs }) {
+// ── Prominent countdown shown at top of modal ────────────────────────────────
+
+function ModalTimer({ deadline, totalMs }) {
   const msLeft = useCountdown(deadline);
   const pct = totalMs > 0 ? (msLeft / totalMs) * 100 : 0;
   const secs = Math.ceil(msLeft / 1000);
   const color = pct > 50 ? "var(--green)" : pct > 25 ? "var(--gold)" : "var(--red)";
   return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ fontSize: "0.72rem", color: "var(--text-dim)", marginBottom: 4 }}>{secs}s remaining</div>
-      <div style={{ height: 5, background: "var(--border)", borderRadius: 3, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: color, transition: "width 0.25s linear, background 0.5s" }} />
+    <div className="modal-timer">
+      <div className="modal-timer-digits" style={{ color }}>{secs}</div>
+      <div className="modal-timer-label">seconds remaining</div>
+      <div className="modal-timer-bar">
+        <div className="modal-timer-fill" style={{ width: `${pct}%`, background: color }} />
       </div>
     </div>
   );
 }
+
+// ── Boon +/− stepper row ─────────────────────────────────────────────────────
+
+function BoonStepper({ label, value, onDec, onInc, canDec, canInc }) {
+  return (
+    <div className="boon-stepper-row">
+      <span className="boon-stepper-label">{label}</span>
+      <div className="boon-stepper-controls">
+        <button className="boon-stepper-btn" onClick={onDec} disabled={!canDec}>−</button>
+        <span className="boon-stepper-value">{value}</span>
+        <button className="boon-stepper-btn" onClick={onInc} disabled={!canInc}>+</button>
+      </div>
+    </div>
+  );
+}
+
+// ── VS header with live boon counts ─────────────────────────────────────────
+
+function ModalVsRow({ match, lobby, pendingA = 0, pendingB = 0 }) {
+  const handicap = matchHandicap(lobby, match);
+  const totalA = handicap.aBoons + pendingA;
+  const totalB = handicap.bBoons + pendingB;
+
+  return (
+    <>
+      <div className="modal-vs-row">
+        <div className="modal-player-card side-a">
+          <div className="modal-player-name" style={{ color: "var(--blue-light)" }}>
+            {match.playerAName}
+          </div>
+          <div className="modal-player-boons">
+            {totalA > 0
+              ? Array.from({ length: Math.min(totalA, 12) }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="boon-pip"
+                    style={i >= handicap.aBoons ? { background: "var(--gold)", boxShadow: "0 0 5px var(--gold)" } : undefined}
+                  />
+                ))
+              : <span className="boon-count">none</span>}
+          </div>
+          {pendingA > 0 && (
+            <div style={{ fontSize: "0.68rem", color: "var(--gold)", marginTop: 4 }}>+{pendingA} pending</div>
+          )}
+        </div>
+
+        <span className="vs-sep" style={{ fontSize: "0.9rem" }}>VS</span>
+
+        <div className="modal-player-card side-b">
+          <div className="modal-player-name" style={{ color: "var(--green)" }}>
+            {match.playerBName}
+          </div>
+          <div className="modal-player-boons">
+            {totalB > 0
+              ? Array.from({ length: Math.min(totalB, 12) }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="boon-pip"
+                    style={i >= handicap.bBoons ? { background: "var(--gold)", boxShadow: "0 0 5px var(--gold)" } : undefined}
+                  />
+                ))
+              : <span className="boon-count">none</span>}
+          </div>
+          {pendingB > 0 && (
+            <div style={{ fontSize: "0.68rem", color: "var(--gold)", marginTop: 4 }}>+{pendingB} pending</div>
+          )}
+        </div>
+      </div>
+
+      {handicap.percent > 0 && (
+        <div style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--red)", marginBottom: 14 }}>
+          ⚠ {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% damage handicap
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── Betting modal shell ──────────────────────────────────────────────────────
+
+function BettingModal({ open, deadline, totalMs, children }) {
+  if (!open) return null;
+  return (
+    <div className="betting-overlay">
+      <div className="betting-modal">
+        <ModalTimer deadline={deadline} totalMs={totalMs} />
+        <div className="modal-body">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Section divider label ────────────────────────────────────────────────────
+
+function SectionLabel({ children }) {
+  return <div className="modal-section-label">{children}</div>;
+}
+
+// ── Main export ──────────────────────────────────────────────────────────────
 
 export default function RoundActions({ lobby, me, playerId }) {
   const [error, setError] = useState("");
 
   if (!lobby.bracket || !me) return null;
 
-  const allActiveMatches = lobby.bracket.rounds.flat().filter((m) => m.status === "ready" || m.status === "in_progress");
+  const allActiveMatches = lobby.bracket.rounds
+    .flat()
+    .filter((m) => m.status === "ready" || m.status === "in_progress");
 
   async function run(event, payload) {
     setError("");
@@ -83,7 +187,7 @@ export default function RoundActions({ lobby, me, playerId }) {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14 }}>
         <button onClick={() => run("player:buyBoons", {})} className="btn-ghost">
           Buy 2 Boons — {lobby.settings.buyBoonsCost} chips
         </button>
@@ -140,7 +244,8 @@ function MatchLocked({ match, lobby, isParticipant }) {
       </div>
       {handicap.percent > 0 && (
         <p style={{ marginTop: 10, color: "var(--text-mid)", fontSize: "0.85rem" }}>
-          Handicap: <span style={{ color: "var(--red)" }}>
+          Handicap:{" "}
+          <span style={{ color: "var(--red)" }}>
             {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% dmg
           </span>
         </p>
@@ -152,11 +257,10 @@ function MatchLocked({ match, lobby, isParticipant }) {
   );
 }
 
-// ── Pre-bet phase container ───────────────────────────────────────────────────
+// ── Pre-bet phase router ──────────────────────────────────────────────────────
 
 function MatchPreBet({ lobby, match, preBet, me, playerId, isParticipant, run }) {
   const phase = preBet?.phase ?? "complete";
-
   if (phase === "participants") {
     return <ParticipantPhase lobby={lobby} match={match} preBet={preBet} me={me} playerId={playerId} isParticipant={isParticipant} run={run} />;
   }
@@ -169,244 +273,388 @@ function MatchPreBet({ lobby, match, preBet, me, playerId, isParticipant, run })
 // ── Participant sealed boon phase ─────────────────────────────────────────────
 
 function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, run }) {
-  const [boonAmt, setBoonAmt] = useState(0);
+  const [pendingSelf, setPendingSelf] = useState(0);
   const mySubmitted = preBet.sealedBoons[playerId] === true;
   const isMyTurn = isParticipant && !mySubmitted;
+  const otherParticipantId = preBet.participants.find((id) => id !== playerId);
+  const otherSubmitted = preBet.sealedBoons[otherParticipantId] === true;
 
   useEffect(() => {
     if (isMyTurn) { playBeep(); vibrate(); }
   }, [isMyTurn]);
 
-  const otherParticipantId = preBet.participants.find((id) => id !== playerId);
-  const otherName = playerName(lobby, otherParticipantId);
-  const otherSubmitted = preBet.sealedBoons[otherParticipantId] === true;
+  const boonsAvailable = me.boons - pendingSelf;
+
+  function handleSubmit() {
+    run("player:submitParticipantBoons", { matchId: match.id, amount: pendingSelf });
+  }
 
   return (
-    <div className="card card-red" style={{ borderColor: isMyTurn ? "var(--gold)" : undefined }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <span className="section-label" style={{ marginBottom: 0 }}>Sealed Boon Placement</span>
-        <CountdownBar deadline={preBet.deadline} totalMs={preBet.turnDurationMs} />
-      </div>
+    <>
+      {/* Ambient card (always visible) */}
+      <div className="card card-red" style={{ borderColor: isMyTurn ? "var(--border-gold)" : undefined }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+          <span className="section-label" style={{ marginBottom: 0 }}>Sealed Boon Placement</span>
+        </div>
 
-      <div className="vs-banner" style={{ marginBottom: 14 }}>
-        <span className="vs-name" style={{ color: "var(--blue-light)" }}>{match.playerAName}</span>
-        <span className="vs-sep">VS</span>
-        <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
-      </div>
+        <div className="vs-banner" style={{ marginBottom: 14 }}>
+          <span className="vs-name" style={{ color: "var(--blue-light)" }}>{match.playerAName}</span>
+          <span className="vs-sep">VS</span>
+          <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
+        </div>
 
-      {/* Participant status indicators */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-        {preBet.participants.map((id) => {
-          const submitted = preBet.sealedBoons[id] === true;
-          const name = playerName(lobby, id);
-          return (
-            <div key={id} style={{ flex: 1, padding: "8px 12px", borderRadius: "var(--r)", border: `1px solid ${submitted ? "var(--green)" : "var(--border)"}`, background: submitted ? "var(--green-dim)" : "transparent", textAlign: "center" }}>
-              <div style={{ fontSize: "0.72rem", color: submitted ? "var(--green)" : "var(--text-dim)" }}>{submitted ? "✓ Sealed" : "Waiting…"}</div>
-              <div style={{ fontSize: "0.85rem", color: "var(--text)", fontWeight: 500, marginTop: 2 }}>{name}</div>
-            </div>
-          );
-        })}
-      </div>
+        <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+          {preBet.participants.map((id) => {
+            const submitted = preBet.sealedBoons[id] === true;
+            return (
+              <div key={id} style={{
+                flex: 1, padding: "8px 12px", borderRadius: "var(--r)",
+                border: `1px solid ${submitted ? "var(--green)" : "var(--border)"}`,
+                background: submitted ? "var(--green-dim)" : "transparent",
+                textAlign: "center",
+              }}>
+                <div style={{ fontSize: "0.72rem", color: submitted ? "var(--green)" : "var(--text-dim)" }}>
+                  {submitted ? "✓ Sealed" : "Waiting…"}
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "var(--text)", fontWeight: 500, marginTop: 2 }}>
+                  {playerName(lobby, id)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-      {isParticipant && !mySubmitted && (
-        <div>
-          <p style={{ fontSize: "0.82rem", color: "var(--text-mid)", marginBottom: 10 }}>
-            Place boons on yourself (sealed — your opponent won't see until both submit).
+        {isParticipant && mySubmitted && (
+          <p style={{ fontSize: "0.82rem", color: "var(--green)" }}>
+            ✓ Your boons are sealed. Waiting for {otherSubmitted ? "phase to complete…" : `${playerName(lobby, otherParticipantId)} to submit…`}
           </p>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input
-              type="number" min={0} max={me.boons} value={boonAmt}
-              onChange={(e) => setBoonAmt(Number(e.target.value))}
-              style={{ width: 70, display: "inline-block" }}
-            />
-            <span style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>of {me.boons} boons</span>
-            <button
-              className="btn-gold"
-              onClick={() => run("player:submitParticipantBoons", { matchId: match.id, amount: boonAmt })}
-            >
-              Seal & Submit
-            </button>
+        )}
+        {!isParticipant && (
+          <p style={{ fontSize: "0.82rem", color: "var(--text-dim)" }}>
+            Participants are placing boons on themselves in secret. Your turn starts once both submit.
+          </p>
+        )}
+
+        <TrumpCardButton match={match} me={me} playerId={playerId} run={run} />
+      </div>
+
+      {/* Modal — only when it's this participant's turn */}
+      <BettingModal open={isMyTurn} deadline={preBet.deadline} totalMs={preBet.turnDurationMs}>
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ textAlign: "center", fontSize: "0.72rem", letterSpacing: "0.14em", color: "var(--gold)", fontWeight: 700, textTransform: "uppercase", marginBottom: 14 }}>
+            Seal Your Boons
+          </div>
+
+          <ModalVsRow match={match} lobby={lobby}
+            pendingA={match.playerA === playerId ? pendingSelf : 0}
+            pendingB={match.playerB === playerId ? pendingSelf : 0}
+          />
+        </div>
+
+        <div className="modal-section">
+          <SectionLabel>Boons to place on yourself</SectionLabel>
+          <BoonStepper
+            label={`${me.name ?? "You"} (you)`}
+            value={pendingSelf}
+            onDec={() => setPendingSelf((v) => Math.max(0, v - 1))}
+            onInc={() => setPendingSelf((v) => Math.min(me.boons, v + 1))}
+            canDec={pendingSelf > 0}
+            canInc={pendingSelf < me.boons}
+          />
+          <div className="modal-remaining">
+            {me.boons} boon{me.boons !== 1 ? "s" : ""} available · {boonsAvailable} remaining after placement
           </div>
         </div>
-      )}
 
-      {isParticipant && mySubmitted && (
-        <p style={{ fontSize: "0.82rem", color: "var(--green)" }}>
-          ✓ Your boons are sealed. Waiting for {otherSubmitted ? "phase to complete…" : `${otherName} to submit…`}
-        </p>
-      )}
-
-      {!isParticipant && (
-        <p style={{ fontSize: "0.82rem", color: "var(--text-dim)" }}>
-          Both participants are placing boons on themselves in secret. Spectator turns start once both submit.
-        </p>
-      )}
-
-      <TrumpCardButton match={match} me={me} playerId={playerId} run={run} />
-    </div>
+        <div className="modal-section" style={{ marginBottom: 0 }}>
+          <button
+            className="btn-gold"
+            style={{ width: "100%", padding: "14px", fontSize: "0.95rem", letterSpacing: "0.08em" }}
+            onClick={handleSubmit}
+          >
+            🔒 Seal &amp; Submit
+          </button>
+          <p style={{ textAlign: "center", fontSize: "0.72rem", color: "var(--text-dim)", marginTop: 10, marginBottom: 0 }}>
+            Your choice is hidden from your opponent until both submit.
+          </p>
+        </div>
+      </BettingModal>
+    </>
   );
 }
 
 // ── Spectator turn phase ──────────────────────────────────────────────────────
 
 function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run }) {
-  const [boonTarget, setBoonTarget] = useState(match.playerA);
-  const [boonAmount, setBoonAmount] = useState(1);
-  const [betStocks, setBetStocks] = useState(lobby.settings.stockPool[0]?.stocks ?? 0);
+  const [boonsA, setBoonsA] = useState(0);
+  const [boonsB, setBoonsB] = useState(0);
+  const [prediction, setPrediction] = useState(me.matchPredictions?.[match.id] || "");
+  const [selectedStock, setSelectedStock] = useState(null); // 1/2/3, or null = no bet
   const [betWager, setBetWager] = useState(10);
+  const [submitting, setSubmitting] = useState(false);
+  const [modalError, setModalError] = useState("");
 
   const currentId = preBet.spectatorOrder[preBet.currentTurnIdx];
   const isMyTurn = playerId === currentId;
+  const totalPending = boonsA + boonsB;
+  const boonsRemaining = me.boons - totalPending;
+  const stockBets = lobby.stockBets?.[match.id] || [];
+  const alreadyBet = stockBets.some((b) => b.playerId === playerId);
+  const canBetStocks = me.eliminated && me.chips > 0 && !alreadyBet;
+  const canRideDouble = me.eliminated && me.chips === 0;
 
   useEffect(() => {
     if (isMyTurn) { playBeep(); vibrate(); }
   }, [isMyTurn]);
 
-  const handicap = matchHandicap(lobby, match);
-  const stockBets = lobby.stockBets?.[match.id] || [];
-  const existingPrediction = me.matchPredictions?.[match.id];
+  async function handleDone() {
+    if (submitting) return;
+    setSubmitting(true);
+    setModalError("");
+    // Commit everything in order, then pass the turn. Prediction must land before the
+    // Stock Bet, since a bet is only valid once a match winner has been predicted.
+    try {
+      if (boonsA > 0) {
+        const r = await emitAck("player:placeBoon", { code: lobby.code, playerId, matchId: match.id, targetParticipantId: match.playerA, amount: boonsA });
+        if (!r.ok) throw new Error(r.error);
+      }
+      if (boonsB > 0) {
+        const r = await emitAck("player:placeBoon", { code: lobby.code, playerId, matchId: match.id, targetParticipantId: match.playerB, amount: boonsB });
+        if (!r.ok) throw new Error(r.error);
+      }
+      if (prediction) {
+        const r = await emitAck("player:setMatchPrediction", { code: lobby.code, playerId, matchId: match.id, predictedWinnerId: prediction });
+        if (!r.ok) throw new Error(r.error);
+      }
+      if (canBetStocks && prediction && selectedStock != null) {
+        const r = await emitAck("player:placeStockBet", { code: lobby.code, playerId, matchId: match.id, stocks: selectedStock, wager: Number(betWager) });
+        if (!r.ok) throw new Error(r.error);
+      }
+    } catch (e) {
+      setModalError(e.message);
+      setSubmitting(false);
+      return; // leave the modal open so they can fix it before their turn ends
+    }
+    await emitAck("player:spectatorDone", { code: lobby.code, playerId, matchId: match.id });
+    setSubmitting(false);
+  }
 
   return (
-    <div className="card card-red">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <span className="section-label" style={{ marginBottom: 0 }}>Spectator Betting — Turn {preBet.currentTurnIdx + 1} of {preBet.spectatorOrder.length}</span>
-      </div>
-
-      <div className="vs-banner" style={{ marginBottom: 12 }}>
-        <span className="vs-name" style={{ color: "var(--blue-light)" }}>{match.playerAName}</span>
-        <span className="vs-sep">VS</span>
-        <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
-      </div>
-
-      {handicap.percent > 0 && (
-        <p style={{ marginBottom: 10, fontSize: "0.82rem" }}>
-          Boon handicap: <span style={{ color: "var(--red)" }}>
-            {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% dmg
+    <>
+      {/* Ambient turn-queue card */}
+      <div className="card card-red">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+          <span className="section-label" style={{ marginBottom: 0 }}>
+            Spectator Betting — Turn {preBet.currentTurnIdx + 1} of {preBet.spectatorOrder.length}
           </span>
-        </p>
-      )}
+        </div>
 
-      {/* Turn queue */}
-      <div style={{ marginBottom: 14 }}>
-        {preBet.spectatorOrder.map((id, idx) => {
-          const done = idx < preBet.currentTurnIdx;
-          const active = idx === preBet.currentTurnIdx;
-          const name = playerName(lobby, id);
-          const actions = preBet.turnActions?.[id];
-          return (
-            <div key={id} style={{
-              display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", marginBottom: 4,
-              borderRadius: "var(--r)",
-              background: active ? "rgba(212,168,50,0.08)" : "transparent",
-              border: `1px solid ${active ? "var(--border-gold)" : done ? "var(--border)" : "var(--border)"}`,
-              opacity: done ? 0.6 : 1,
-            }}>
-              <span style={{ fontSize: "0.72rem", color: active ? "var(--gold)" : done ? "var(--green)" : "var(--text-dim)", width: 18, textAlign: "center", flexShrink: 0 }}>
-                {done ? "✓" : active ? "▶" : idx + 1}
-              </span>
-              <span style={{ flex: 1, fontSize: "0.85rem", color: active ? "var(--text)" : "var(--text-mid)", fontWeight: active ? 600 : 400 }}>
-                {name} {id === playerId ? "(you)" : ""}
-              </span>
-              {active && <CountdownBar deadline={preBet.deadline} totalMs={preBet.turnDurationMs} />}
-              {done && actions && (
-                <span style={{ fontSize: "0.72rem", color: "var(--text-dim)" }}>
-                  {Object.entries(actions.boons || {}).map(([tid, n]) => `${n} boon${n > 1 ? "s" : ""} on ${playerName(lobby, tid)}`).join(", ")}
-                  {actions.bet ? ` · bet ${actions.bet.wager} on ${actions.bet.stocks} stock(s)` : ""}
-                  {actions.rideDouble ? ` · rode double on ${actions.rideDouble.stocks} stock(s)` : ""}
-                  {!Object.keys(actions.boons || {}).length && !actions.bet && !actions.rideDouble ? "passed" : ""}
+        <div className="vs-banner" style={{ marginBottom: 12 }}>
+          <span className="vs-name" style={{ color: "var(--blue-light)" }}>{match.playerAName}</span>
+          <span className="vs-sep">VS</span>
+          <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
+        </div>
+
+        {/* Turn queue */}
+        <div style={{ marginBottom: 12 }}>
+          {preBet.spectatorOrder.map((id, idx) => {
+            const done = idx < preBet.currentTurnIdx;
+            const active = idx === preBet.currentTurnIdx;
+            const actions = preBet.turnActions?.[id];
+            return (
+              <div key={id} style={{
+                display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", marginBottom: 4,
+                borderRadius: "var(--r)",
+                background: active ? "rgba(212,168,50,0.08)" : "transparent",
+                border: `1px solid ${active ? "var(--border-gold)" : "var(--border)"}`,
+                opacity: done ? 0.6 : 1,
+              }}>
+                <span style={{ fontSize: "0.72rem", color: active ? "var(--gold)" : done ? "var(--green)" : "var(--text-dim)", width: 18, textAlign: "center", flexShrink: 0 }}>
+                  {done ? "✓" : active ? "▶" : idx + 1}
                 </span>
-              )}
-              {done && !actions && <span style={{ fontSize: "0.72rem", color: "var(--text-dim)" }}>passed</span>}
-            </div>
-          );
-        })}
+                <span style={{ flex: 1, fontSize: "0.85rem", color: active ? "var(--text)" : "var(--text-mid)", fontWeight: active ? 600 : 400 }}>
+                  {playerName(lobby, id)}{id === playerId ? " (you)" : ""}
+                </span>
+                {active && (
+                  <span style={{ fontSize: "0.72rem", color: "var(--gold)" }}>
+                    {isMyTurn ? "Your turn" : "Active"}
+                  </span>
+                )}
+                {done && actions && (
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-dim)" }}>
+                    {[
+                      ...Object.entries(actions.boons || {}).map(([tid, n]) => `${n}b → ${playerName(lobby, tid)}`),
+                      actions.bet ? `bet ${actions.bet.wager}` : null,
+                      actions.rideDouble ? `rode double` : null,
+                    ].filter(Boolean).join(" · ") || "passed"}
+                  </span>
+                )}
+                {done && !actions && <span style={{ fontSize: "0.72rem", color: "var(--text-dim)" }}>passed</span>}
+              </div>
+            );
+          })}
+        </div>
+
+        {!isMyTurn && !isParticipant && (
+          <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", borderTop: "1px solid var(--border)", paddingTop: 12, marginBottom: 0 }}>
+            {preBet.spectatorOrder.indexOf(playerId) > preBet.currentTurnIdx
+              ? "Your turn is coming up — get ready!"
+              : "Your turn has passed."}
+          </p>
+        )}
+        {isParticipant && (
+          <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", borderTop: "1px solid var(--border)", paddingTop: 12, marginBottom: 0 }}>
+            Spectators are placing boons and bets. Get ready to play!
+          </p>
+        )}
+
+        <TrumpCardButton match={match} me={me} playerId={playerId} run={(e, p) => emitAck(e, { code: lobby.code, playerId, ...p })} />
       </div>
 
-      {/* Active spectator's action form */}
-      {isMyTurn && !isParticipant && (
-        <div style={{ borderTop: "1px solid var(--border-gold)", paddingTop: 14 }}>
-          {!isParticipant && (
-            <div className="field">
-              <span className="field-label">Match Winner Prediction</span>
-              <select
-                value={existingPrediction || ""}
-                onChange={(e) => run("player:setMatchPrediction", { matchId: match.id, predictedWinnerId: e.target.value })}
-              >
-                <option value="" disabled>Pick a winner</option>
-                <option value={match.playerA}>{match.playerAName}</option>
-                <option value={match.playerB}>{match.playerBName}</option>
-              </select>
-            </div>
-          )}
+      {/* Betting modal — only when it's this spectator's turn */}
+      <BettingModal open={isMyTurn && !isParticipant} deadline={preBet.deadline} totalMs={preBet.turnDurationMs}>
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ textAlign: "center", fontSize: "0.72rem", letterSpacing: "0.14em", color: "var(--gold)", fontWeight: 700, textTransform: "uppercase", marginBottom: 14 }}>
+            Your Turn to Bet
+          </div>
+          <ModalVsRow match={match} lobby={lobby} pendingA={boonsA} pendingB={boonsB} />
+        </div>
 
-          <div className="field">
-            <span className="field-label">Place Boon(s) on</span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <select value={boonTarget} onChange={(e) => setBoonTarget(e.target.value)} style={{ flex: 1 }}>
-                <option value={match.playerA}>{match.playerAName}</option>
-                <option value={match.playerB}>{match.playerBName}</option>
-              </select>
-              <input type="number" min={1} max={me.boons} value={boonAmount} onChange={(e) => setBoonAmount(e.target.value)} style={{ width: 64, display: "inline-block" }} />
-              <button className="btn-blue" onClick={() => run("player:placeBoon", { matchId: match.id, targetParticipantId: boonTarget, amount: boonAmount })}>Place</button>
+        {/* Boon placement */}
+        <div className="modal-section">
+          <SectionLabel>Place Boons</SectionLabel>
+          <BoonStepper
+            label={match.playerAName}
+            value={boonsA}
+            onDec={() => setBoonsA((v) => Math.max(0, v - 1))}
+            onInc={() => setBoonsA((v) => v + 1)}
+            canDec={boonsA > 0}
+            canInc={boonsRemaining > 0}
+          />
+          <BoonStepper
+            label={match.playerBName}
+            value={boonsB}
+            onDec={() => setBoonsB((v) => Math.max(0, v - 1))}
+            onInc={() => setBoonsB((v) => v + 1)}
+            canDec={boonsB > 0}
+            canInc={boonsRemaining > 0}
+          />
+          <div className="modal-remaining">
+            {me.boons} boon{me.boons !== 1 ? "s" : ""} available · {boonsRemaining} remaining
+          </div>
+        </div>
+
+        {/* Match prediction */}
+        <div className="modal-section">
+          <SectionLabel>Match Prediction</SectionLabel>
+          <div className="prediction-toggle">
+            <button
+              className={`prediction-btn${prediction === match.playerA ? " selected-a" : ""}`}
+              onClick={() => setPrediction(prediction === match.playerA ? "" : match.playerA)}
+            >
+              {match.playerAName}
+            </button>
+            <button
+              className={`prediction-btn${prediction === match.playerB ? " selected-b" : ""}`}
+              onClick={() => setPrediction(prediction === match.playerB ? "" : match.playerB)}
+            >
+              {match.playerBName}
+            </button>
+          </div>
+        </div>
+
+        {/* Stock bet — eliminated players with chips, shown once they've picked a winner */}
+        {canBetStocks && prediction && (
+          <div className="modal-section">
+            <SectionLabel>Stock Bet</SectionLabel>
+            <p style={{ fontSize: "0.76rem", color: "var(--text-mid)", margin: "0 0 10px" }}>
+              How many stocks will <strong style={{ color: "var(--text)" }}>{playerName(lobby, prediction)}</strong> have left if they win?
+            </p>
+            <div className="stock-bet-toggle">
+              {lobby.settings.stockPool.map((s) => {
+                const taken = stockBets.some((b) => b.stocks === s.stocks);
+                const selected = selectedStock === s.stocks;
+                return (
+                  <button
+                    key={s.stocks}
+                    className={`stock-bet-btn${selected ? " selected" : ""}`}
+                    disabled={taken && !selected}
+                    onClick={() => setSelectedStock(selected ? null : s.stocks)}
+                  >
+                    <span className="stock-bet-num">{s.stocks}</span>
+                    <span className="stock-bet-mult">×{s.multiplier}</span>
+                    {taken && <span className="stock-bet-taken">taken</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedStock != null && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10 }}>
+                <span style={{ fontSize: "0.78rem", color: "var(--text-mid)" }}>Wager</span>
+                <input
+                  type="number" min={1} max={me.chips} value={betWager}
+                  onChange={(e) => setBetWager(e.target.value)}
+                  style={{ width: 80, display: "inline-block" }}
+                />
+                <span style={{ fontSize: "0.78rem", color: "var(--text-dim)" }}>
+                  of {me.chips} chips → win {Number(betWager) * (lobby.settings.stockPool.find((s) => s.stocks === selectedStock)?.multiplier ?? 1)}
+                </span>
+              </div>
+            )}
+            <div className="modal-remaining" style={{ marginTop: 8 }}>
+              Pays only if {playerName(lobby, prediction)} wins with exactly that many stocks.
             </div>
           </div>
+        )}
 
-          {me.eliminated && (
-            <div className="field">
-              <span className="field-label">Stock Bet</span>
-              <p style={{ marginBottom: 8, fontSize: "0.8rem", color: "var(--text-dim)" }}>
-                Open: {lobby.settings.stockPool.filter((s) => !stockBets.some((b) => b.stocks === s.stocks)).map((s) => `${s.stocks} stock(s) ×${s.multiplier}`).join(", ") || "none"}
-              </p>
-              <div style={{ display: "flex", gap: 8 }}>
-                <select value={betStocks} onChange={(e) => setBetStocks(Number(e.target.value))} style={{ flex: 1 }}>
-                  {lobby.settings.stockPool.map((s) => (
-                    <option key={s.stocks} value={s.stocks} disabled={stockBets.some((b) => b.stocks === s.stocks)}>
-                      {s.stocks} stock(s) — ×{s.multiplier}
-                    </option>
-                  ))}
-                </select>
-                <input type="number" min={1} max={me.chips} value={betWager} onChange={(e) => setBetWager(e.target.value)} style={{ width: 70, display: "inline-block" }} />
-                <button className="btn-blue" onClick={() => run("player:placeStockBet", { matchId: match.id, stocks: betStocks, wager: betWager })}>Bet</button>
-              </div>
+        {/* Ride Double — only when the eliminated player has no chips left */}
+        {canRideDouble && stockBets.length > 0 && (
+          <div className="modal-section">
+            <SectionLabel>Ride Double</SectionLabel>
+            <p style={{ fontSize: "0.76rem", color: "var(--text-mid)", margin: "0 0 8px" }}>
+              You're out of chips — piggyback on another player's Stock Bet to split the winnings.
+            </p>
+            {stockBets.map((b) => (
+              <button
+                key={b.stocks}
+                className="btn-ghost"
+                style={{ width: "100%", marginBottom: 6 }}
+                disabled={b.riders?.length >= 1 || b.playerId === playerId}
+                onClick={() => emitAck("player:rideDouble", { code: lobby.code, playerId, matchId: match.id, stocks: b.stocks })}
+              >
+                Ride {playerName(lobby, b.playerId)}'s bet · {playerName(lobby, b.predictedWinnerId)} with {b.stocks} stock{b.stocks !== 1 ? "s" : ""}
+                {b.riders?.length >= 1 ? " (full)" : ""}
+              </button>
+            ))}
+          </div>
+        )}
 
-              {me.chips === 0 && stockBets.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <span className="field-label" style={{ display: "block", marginBottom: 6 }}>Ride Double</span>
-                  {stockBets.map((b) => (
-                    <button key={b.stocks} className="btn-ghost" style={{ marginRight: 8, marginBottom: 6 }}
-                      onClick={() => run("player:rideDouble", { matchId: match.id, stocks: b.stocks })}>
-                      {playerName(lobby, b.playerId)}'s bet · {b.stocks} stock(s)
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+        {canRideDouble && stockBets.length === 0 && (
+          <div className="modal-section">
+            <SectionLabel>Ride Double</SectionLabel>
+            <p style={{ fontSize: "0.76rem", color: "var(--text-dim)", margin: 0 }}>
+              No Stock Bets to ride yet. If someone bets later this round, you can hop on.
+            </p>
+          </div>
+        )}
 
-          <button className="btn-gold" style={{ marginTop: 8 }} onClick={() => run("player:spectatorDone", { matchId: match.id })}>
-            Done — Pass Turn
+        {modalError && (
+          <p className="error" style={{ marginTop: 4 }}>{modalError}</p>
+        )}
+
+        {/* Done button */}
+        <div className="modal-section" style={{ marginBottom: 0 }}>
+          <button
+            className="btn-gold"
+            style={{ width: "100%", padding: "14px", fontSize: "0.95rem", letterSpacing: "0.08em" }}
+            onClick={handleDone}
+            disabled={submitting}
+          >
+            {submitting ? "Submitting…" : "✓ Done — Pass Turn"}
           </button>
         </div>
-      )}
-
-      {!isMyTurn && !isParticipant && (
-        <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-          {preBet.currentTurnIdx < preBet.spectatorOrder.indexOf(playerId)
-            ? "Your turn is coming up."
-            : preBet.spectatorOrder.indexOf(playerId) === -1
-            ? "You are a participant — watching spectator turns."
-            : "Your turn has passed."}
-        </p>
-      )}
-
-      {isParticipant && (
-        <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-          Spectators are placing boons and bets. Get ready to play!
-        </p>
-      )}
-
-      <TrumpCardButton match={match} me={me} playerId={playerId} run={run} />
-    </div>
+      </BettingModal>
+    </>
   );
 }
 
@@ -420,38 +668,51 @@ function PreBetComplete({ lobby, match, preBet, me, playerId, isParticipant, run
     <div className="card card-red">
       <span className="section-label">Ready to Start</span>
 
-      <div className="vs-banner" style={{ marginBottom: 12 }}>
+      <div className="vs-banner" style={{ marginBottom: 14 }}>
         <span className="vs-name" style={{ color: "var(--blue-light)" }}>{match.playerAName}</span>
         <span className="vs-sep">VS</span>
         <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
       </div>
 
-      <p style={{ marginBottom: 8 }}>
-        Boons — {match.playerAName}:{" "}
-        {Array.from({ length: handicap.aBoons }).map((_, i) => <span key={i} className="boon-pip" />)}
-        {handicap.aBoons === 0 && "none"}
-        {"  ·  "}
-        {match.playerBName}:{" "}
-        {Array.from({ length: handicap.bBoons }).map((_, i) => <span key={i} className="boon-pip" />)}
-        {handicap.bBoons === 0 && "none"}
-        {handicap.percent > 0 && (
-          <span style={{ color: "var(--red)", marginLeft: 8 }}>
-            {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% dmg
-          </span>
-        )}
-      </p>
+      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+        {[
+          { name: match.playerAName, count: handicap.aBoons, color: "var(--blue-light)" },
+          { name: match.playerBName, count: handicap.bBoons, color: "var(--green)" },
+        ].map(({ name, count, color }) => (
+          <div key={name} style={{ flex: 1, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "10px 12px", textAlign: "center" }}>
+            <div style={{ fontSize: "0.72rem", color, fontWeight: 700, marginBottom: 5 }}>{name}</div>
+            <div className="modal-player-boons">
+              {count > 0
+                ? Array.from({ length: count }).map((_, i) => <span key={i} className="boon-pip" />)
+                : <span className="boon-count" style={{ fontSize: "0.72rem", color: "var(--text-dim)" }}>no boons</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {handicap.percent > 0 && (
+        <p style={{ fontSize: "0.82rem", color: "var(--red)", marginBottom: 10 }}>
+          ⚠ {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% damage handicap
+        </p>
+      )}
 
       {!isParticipant && (
         <div className="field">
-          <span className="field-label">Match Winner Prediction</span>
-          <select
-            value={existingPrediction || ""}
-            onChange={(e) => run("player:setMatchPrediction", { matchId: match.id, predictedWinnerId: e.target.value })}
-          >
-            <option value="" disabled>Pick a winner</option>
-            <option value={match.playerA}>{match.playerAName}</option>
-            <option value={match.playerB}>{match.playerBName}</option>
-          </select>
+          <span className="field-label">Match Prediction</span>
+          <div className="prediction-toggle">
+            <button
+              className={`prediction-btn${existingPrediction === match.playerA ? " selected-a" : ""}`}
+              onClick={() => run("player:setMatchPrediction", { matchId: match.id, predictedWinnerId: match.playerA })}
+            >
+              {match.playerAName}
+            </button>
+            <button
+              className={`prediction-btn${existingPrediction === match.playerB ? " selected-b" : ""}`}
+              onClick={() => run("player:setMatchPrediction", { matchId: match.id, predictedWinnerId: match.playerB })}
+            >
+              {match.playerBName}
+            </button>
+          </div>
         </div>
       )}
 
@@ -464,7 +725,7 @@ function PreBetComplete({ lobby, match, preBet, me, playerId, isParticipant, run
   );
 }
 
-// ── Trump Card (always available during ready phase) ─────────────────────────
+// ── Trump Card ────────────────────────────────────────────────────────────────
 
 function TrumpCardButton({ match, me, playerId, run }) {
   if (!me.hasTrumpCard) return null;

@@ -63,6 +63,11 @@ export function setMatchPrediction(lobby, playerId, matchId, predictedWinnerId) 
     throw new Error("Prediction must be one of the two match participants");
   }
   player.matchPredictions[matchId] = predictedWinnerId;
+
+  // Keep any existing Stock Bet's predicted winner in sync with the current prediction,
+  // since the bet only pays out when that prediction is correct.
+  const existingBet = (lobby.stockBets[matchId] || []).find((b) => b.playerId === playerId);
+  if (existingBet) existingBet.predictedWinnerId = predictedWinnerId;
 }
 
 export function buyBoons(lobby, playerId) {
@@ -241,16 +246,23 @@ export function placeStockBet(lobby, playerId, matchId, stocks, wager) {
     if (preBet.spectatorOrder[preBet.currentTurnIdx] !== playerId) throw new Error("It is not your turn");
   }
 
+  // A Stock Bet rides on the player's Match Prediction: it only pays if that
+  // prediction is correct. We don't require a prediction to be set first — the client
+  // gates the UI on that — so we just snapshot whatever prediction exists now (if any).
+  // setMatchPrediction keeps this in sync if the prediction is set or changed later.
+  const predictedWinnerId = player.matchPredictions[matchId] ?? null;
+
   const slot = lobby.settings.stockPool.find((s) => s.stocks === Number(stocks));
   if (!slot) throw new Error("Invalid Stock Pool slot");
   const amount = Number(wager);
   if (!Number.isInteger(amount) || amount <= 0) throw new Error("Wager must be a positive integer");
   if (player.chips < amount) throw new Error("Not enough chips");
   if (!lobby.stockBets[matchId]) lobby.stockBets[matchId] = [];
+  if (lobby.stockBets[matchId].find((b) => b.playerId === playerId)) throw new Error("You already placed a Stock Bet on this match");
   if (lobby.stockBets[matchId].find((b) => b.stocks === Number(stocks))) throw new Error("Someone already holds that slot");
 
   player.chips -= amount;
-  lobby.stockBets[matchId].push({ playerId, stocks: Number(stocks), wager: amount, riders: [] });
+  lobby.stockBets[matchId].push({ playerId, stocks: Number(stocks), wager: amount, predictedWinnerId, riders: [] });
 
   if (preBet) {
     if (!preBet.turnActions[playerId]) preBet.turnActions[playerId] = { boons: {}, bet: null, rideDouble: null };
@@ -344,11 +356,14 @@ export function reportMatchResult(lobby, matchId, winnerId, remainingStocks) {
   for (const p of spectators) p.chips += base;
   for (const p of correct) p.chips += bonus;
 
-  // Stock Bets settlement
+  // Stock Bets settlement.
+  // A bet wins only when BOTH are true: the bettor predicted the actual winner,
+  // and the winner finished with exactly the wagered number of stocks remaining.
   const bets = lobby.stockBets[matchId] || [];
   for (const bet of bets) {
     const bettor = lobby.players.find((p) => p.id === bet.playerId);
-    if (bet.stocks === stocks) {
+    const predictionCorrect = bet.predictedWinnerId === winnerId;
+    if (predictionCorrect && bet.stocks === stocks) {
       const slot = lobby.settings.stockPool.find((s) => s.stocks === bet.stocks);
       const totalWinnings = bet.wager * (slot?.multiplier ?? 1);
       const riderCount = bet.riders.length;

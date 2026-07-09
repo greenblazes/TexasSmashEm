@@ -29,9 +29,9 @@ const SETTINGS = {
   buyBoonsCost: 10, buyBoonsAmount: 2,
   turnDurationMs: 30000,
   stockPool: [
-    { stocks: 0, multiplier: 10 }, { stocks: 1, multiplier: 6 },
-    { stocks: 2, multiplier: 4 },  { stocks: 3, multiplier: 3 },
-    { stocks: 4, multiplier: 2 },  { stocks: 5, multiplier: 1 },
+    { stocks: 1, multiplier: 2 },
+    { stocks: 2, multiplier: 3 },
+    { stocks: 3, multiplier: 5 },
   ],
 };
 
@@ -44,7 +44,7 @@ function makeLobby(matchStatus, preBet = null, extra = {}) {
     settings: SETTINGS,
     bracket: { rounds: [[{ ...BASE_MATCH, status: matchStatus }]] },
     boonPlacements: { m1: { p1: 2, p2: 1 } },
-    stockBets: { m1: [{ playerId: "p3", stocks: 2, wager: 30, riders: [] }] },
+    stockBets: { m1: [{ playerId: "p3", stocks: 2, wager: 30, predictedWinnerId: "p1", riders: [] }] },
     matchPreBet: preBet ? { m1: preBet } : {},
     ...extra,
   };
@@ -406,16 +406,18 @@ function SpectatorPhaseSection() {
   return (
     <Section id="phase-spectator" label="Pre-Bet Phase — Spectator Turn Order">
       <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", marginBottom: 16 }}>
-        Showing as <strong style={{ color: "var(--text)" }}>Charlie (it's your turn)</strong>.
+        Showing as <strong style={{ color: "var(--text)" }}>Charlie (eliminated, has chips)</strong>.
+        No prediction is selected by default — the Stock Bet section stays hidden until Charlie picks a match winner.
       </p>
       <RoundActions
-        lobby={makeLobby("ready", preBet)}
+        lobby={makeLobby("ready", preBet, { stockBets: { m1: [] } })}
         me={{ ...PLAYERS.p3 }}
         playerId="p3"
       />
 
       <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", margin: "24px 0 16px" }}>
-        Showing as <strong style={{ color: "var(--text)" }}>Diana (waiting for your turn, Charlie has gone)</strong>.
+        Showing as <strong style={{ color: "var(--text)" }}>Diana (eliminated, 0 chips — can only Ride Double)</strong> on
+        Charlie's existing bet.
       </p>
       <RoundActions
         lobby={makeLobby("ready", preBetP4Turn)}
