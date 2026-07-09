@@ -235,6 +235,10 @@ function SettingsEditor({ lobby, playerId }) {
         <label>Starting Boons</label>
         <input type="number" value={settings.startingBoons} onChange={(e) => setSettings({ ...settings, startingBoons: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
       </div>
+      <div className="settings-row">
+        <label>Boon cost (chips per boon)</label>
+        <input type="number" min={0} value={settings.boonCost} onChange={(e) => setSettings({ ...settings, boonCost: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
+      </div>
 
       <h3>Pre-Match Betting</h3>
       <div className="settings-row">

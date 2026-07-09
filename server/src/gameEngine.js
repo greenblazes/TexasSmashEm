@@ -88,9 +88,7 @@ export function setMatchPrediction(lobby, playerId, matchId, predictedWinnerId) 
 export function buyBoons(lobby, playerId, quantity = 1) {
   const player = lobby.players.find((p) => p.id === playerId);
   if (!player) throw new Error("Player not found");
-  const { buyBoonsCost, buyBoonsAmount } = lobby.settings;
-  const perBoonCost = Math.round(buyBoonsCost / buyBoonsAmount);
-  const totalCost = perBoonCost * quantity;
+  const totalCost = lobby.settings.boonCost * quantity;
   if (player.chips < totalCost) throw new Error("Not enough chips");
   player.chips -= totalCost;
   player.boons += quantity;

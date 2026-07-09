@@ -5,8 +5,7 @@ export const DEFAULTS = {
   startingChips: 200,
   startingBoons: 2,
   anteAmount: 50,
-  buyBoonsCost: 10, // buys 2 boons
-  buyBoonsAmount: 2,
+  boonCost: 10, // chips per boon purchased
   cowFeedBase: 10,         // chips given to every spectator after each match
   cowFeedBonusMultiplier: 20, // bonus pool = this × number of spectators, split among correct predictors
   turnDurationMs: 30000,   // ms each player has to place boons/bets before their turn auto-advances

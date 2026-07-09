@@ -1,5 +1,5 @@
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLobby } from "../lib/LobbyContext.jsx";
 import { emitAck } from "../lib/socket.js";
 import BracketPanel from "../components/BracketPanel.jsx";
@@ -8,6 +8,8 @@ import BoonIcon from "../components/BoonIcon.jsx";
 import PotIcon from "../components/PotIcon.jsx";
 import BoonDrawer from "../components/BoonDrawer.jsx";
 import TPickIcon from "../components/TPickIcon.jsx";
+import QRCode from "../components/QRCode.jsx";
+import JoinLobbyModal from "../components/JoinLobbyModal.jsx";
 import RoundActions from "./RoundActions.jsx";
 import RewardPopups from "../components/RewardPopups.jsx";
 import Scoreboard from "./Scoreboard.jsx";
@@ -42,20 +44,28 @@ function TexasTPickSelector({ lobby, me, playerId }) {
 
 export default function Lobby() {
   const { code } = useParams();
-  const { lobby, me, playerId, isHost, leaveSession, rejoinAttempted, error } = useLobby();
+  const { lobby, me, playerId, isHost, leaveSession, joinLobby, rejoinAttempted, error } = useLobby();
   const navigate = useNavigate();
   const [boonDrawerOpen, setBoonDrawerOpen] = useState(false);
 
-  useEffect(() => {
-    if (rejoinAttempted && !lobby) navigate("/", { replace: true });
-  }, [rejoinAttempted, lobby, navigate]);
+  async function handleJoinAsNewPlayer(name) {
+    return joinLobby(code, name);
+  }
 
-  if (!lobby) {
+  if (!rejoinAttempted) {
     return (
       <div className="page">
-        {error ? <p className="error">{error}</p> : <p>Loading lobby…</p>}
+        <p>Loading lobby…</p>
       </div>
     );
+  }
+
+  if (!lobby) {
+    // No active session for this lobby — most likely someone scanned the
+    // host's QR code or opened a shared link directly, so they haven't had
+    // a chance to give their name yet. Ask for it here instead of bouncing
+    // them to the home page.
+    return <JoinLobbyModal code={code} onJoin={handleJoinAsNewPlayer} error={error} />;
   }
 
   async function handleStart() {
@@ -115,7 +125,7 @@ export default function Lobby() {
         {me && lobby.status !== "waiting" && (
           <BoonDrawer
             open={boonDrawerOpen}
-            cost={Math.round(lobby.settings.buyBoonsCost / lobby.settings.buyBoonsAmount)}
+            cost={lobby.settings.boonCost}
             chips={me.chips ?? 0}
             onBuy={handleBuyBoon}
           />
@@ -130,6 +140,19 @@ export default function Lobby() {
               <div className="lobby-code-display">{lobby.code}</div>
               <p style={{ textAlign: "center", marginTop: 10, fontSize: "0.72rem" }}>
                 Share this code with players
+              </p>
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+                <div style={{
+                  padding: 12, background: "var(--surface-2)", borderRadius: 12,
+                  border: "1px solid var(--border-gold)",
+                  boxShadow: "0 0 24px rgba(212,168,50,0.15), inset 0 1px 0 rgba(212,168,50,0.1)",
+                  lineHeight: 0,
+                }}>
+                  <QRCode value={`${window.location.origin}/lobby/${lobby.code}`} size={140} />
+                </div>
+              </div>
+              <p style={{ textAlign: "center", marginTop: 10, fontSize: "0.72rem" }}>
+                Or scan to jump straight in
               </p>
             </div>
             <TexasTPickSelector lobby={lobby} me={me} playerId={playerId} />
