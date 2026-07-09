@@ -85,13 +85,16 @@ export function setMatchPrediction(lobby, playerId, matchId, predictedWinnerId) 
   if (existingBet) existingBet.predictedWinnerId = predictedWinnerId;
 }
 
-export function buyBoons(lobby, playerId) {
+export function buyBoons(lobby, playerId, quantity = 1) {
   const player = lobby.players.find((p) => p.id === playerId);
   if (!player) throw new Error("Player not found");
   const { buyBoonsCost, buyBoonsAmount } = lobby.settings;
-  if (player.chips < buyBoonsCost) throw new Error("Not enough chips");
-  player.chips -= buyBoonsCost;
-  player.boons += buyBoonsAmount;
+  const perBoonCost = Math.round(buyBoonsCost / buyBoonsAmount);
+  const totalCost = perBoonCost * quantity;
+  if (player.chips < totalCost) throw new Error("Not enough chips");
+  player.chips -= totalCost;
+  player.boons += quantity;
+  lobby.pot += totalCost;
 }
 
 // ── Pre-bet phase helpers ─────────────────────────────────────────────────────

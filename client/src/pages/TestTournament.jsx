@@ -14,9 +14,12 @@ import { createMockDispatcher } from "../lib/mockEngine/mockDispatcher.js";
 import { setEmitAckOverride, clearEmitAckOverride, emitAck } from "../lib/socket.js";
 import { setTexasTPick } from "../lib/mockEngine/gameEngine.js";
 import ChipIcon from "../components/ChipIcon.jsx";
+import BoonIcon from "../components/BoonIcon.jsx";
+import PotIcon from "../components/PotIcon.jsx";
+import BoonDrawer from "../components/BoonDrawer.jsx";
 import { RewardPopup } from "../components/RewardPopups.jsx";
 import RoundActions from "./RoundActions.jsx";
-import Bracket from "./Bracket.jsx";
+import BracketPanel from "../components/BracketPanel.jsx";
 import Scoreboard from "./Scoreboard.jsx";
 
 const PLAYER_NAMES = [
@@ -51,6 +54,7 @@ export default function TestTournament() {
 
   const [, setTick] = useState(0);
   const [viewAsId, setViewAsId] = useState(lobbyRef.current.hostPlayerId);
+  const [boonDrawerOpen, setBoonDrawerOpen] = useState(false);
   const [log, setLog] = useState([]);
   const [rewards, setRewards] = useState([]);
   const [stocksInput, setStocksInput] = useState(2);
@@ -130,23 +134,48 @@ export default function TestTournament() {
         <RewardPopup key={r.id} reward={r} index={i} onDone={() => setRewards((rs) => rs.filter((x) => x.id !== r.id))} />
       ))}
 
+      {lobby.bracket && <BracketPanel bracket={lobby.bracket} highlightPlayerId={viewAsId} />}
+
       {/* Main game view — the real app UI, driven by the mock lobby */}
-      <main style={{ flex: 1, padding: "24px 28px", maxWidth: 760 }}>
-        <div className="page-header">
-          <div>
-            <span className="wordmark">Texas SMASH'em</span>
-            <span className="page-subtitle">
-              Simulator · {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
-              {" · viewing as "}<strong>{me.name}</strong>{me.id === hostId ? " (Host)" : ""}
-            </span>
-          </div>
-          <div className="page-header-right">
-            <div className="chip-pill">
-              <ChipIcon size={22} className="chip-icon" />
-              <span className="chip-value">{me.chips ?? 0}</span>
+      <main style={{ flex: 1, padding: "24px 28px 24px", maxWidth: 760 }}>
+        <div className="page-header" style={{ margin: "-24px -28px 24px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <div>
+              <span className="wordmark">Texas SMASH'em</span>
+              <span className="page-subtitle">
+                Simulator · {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
+                {" · viewing as "}<strong>{me.name}</strong>{me.id === hostId ? " (Host)" : ""}
+              </span>
             </div>
-            <Link to="/">← Back to app</Link>
+            <div className="page-header-right">
+              <div className="chip-pill">
+                <ChipIcon size={22} className="chip-icon" />
+                <span className="chip-value">{me.chips ?? 0}</span>
+              </div>
+              {lobby.status !== "waiting" && (
+                <div
+                  className="chip-pill boon-pill"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setBoonDrawerOpen((o) => !o)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setBoonDrawerOpen((o) => !o); }}
+                  style={{ cursor: "pointer" }}
+                >
+                  <BoonIcon size={22} className="chip-icon" />
+                  <span className="chip-value">{me.boons ?? 0}</span>
+                </div>
+              )}
+              <Link to="/">← Back to app</Link>
+            </div>
           </div>
+          {lobby.status !== "waiting" && (
+            <BoonDrawer
+              open={boonDrawerOpen}
+              cost={Math.round(lobby.settings.buyBoonsCost / lobby.settings.buyBoonsAmount)}
+              chips={me.chips ?? 0}
+              onBuy={() => emitAck("player:buyBoons", { code: lobby.code, playerId: viewAsId, quantity: 1 })}
+            />
+          )}
         </div>
 
         {lobby.status === "waiting" && (
@@ -167,19 +196,15 @@ export default function TestTournament() {
             {lobby.status === "complete" && lobby.divvied ? (
               <Scoreboard lobby={lobby} />
             ) : (
-              <>
-                <div className="card card-gold">
-                  <div className="pot-display">
-                    <span className="pot-label">Tournament Pot</span>
+              <div className="card card-gold">
+                <div className="pot-display">
+                  <span className="pot-label">Tournament Pot</span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 12 }}>
+                    <PotIcon size={72} />
                     <div className="pot-amount">{lobby.pot.toLocaleString()}</div>
                   </div>
                 </div>
-
-                <div className="card">
-                  <span className="section-label">Bracket</span>
-                  <Bracket bracket={lobby.bracket} highlightPlayerId={viewAsId} />
-                </div>
-              </>
+              </div>
             )}
 
             {lobby.status === "in_progress" && (

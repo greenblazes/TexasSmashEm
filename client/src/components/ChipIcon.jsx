@@ -2,7 +2,7 @@ import chipImg from "../assets/icons/chip.png";
 
 // Poker-chip icon used in the chip-pill (lobby header, testbed).
 // Renders the provided artwork; the spin + glow come from the `.chip-icon` CSS class.
-export default function ChipIcon({ size = 24, className = "" }) {
+export default function ChipIcon({ size = 24, className = "", style }) {
   return (
     <img
       src={chipImg}
@@ -10,6 +10,7 @@ export default function ChipIcon({ size = 24, className = "" }) {
       width={size}
       height={size}
       className={className}
+      style={style}
       draggable={false}
     />
   );

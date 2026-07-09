@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { emitAck } from "../lib/socket.js";
 import { matchHandicap } from "../lib/economy.js";
 import TrumpIcon from "../components/TrumpIcon.jsx";
+import TPickIcon from "../components/TPickIcon.jsx";
 import stockBetImg from "../assets/icons/stockbet.png";
 
 function playerName(lobby, id) {
@@ -186,38 +187,12 @@ export default function RoundActions({ lobby, me, playerId, autoOpenModal = true
 
   return (
     <div className="round-actions">
-      <div className="stat-grid">
-        <div className="stat-tile">
-          <div className="stat-value" style={{ background: "linear-gradient(135deg,#D4A832,#F0C84A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-            {me.chips}
-          </div>
-          <div className="stat-label">Chips</div>
-        </div>
-        <div className="stat-tile">
-          <div className="stat-value" style={{ color: "var(--blue-light)" }}>{me.boons}</div>
-          <div className="stat-label">Boons</div>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14 }}>
-        <button onClick={() => run("player:buyBoons", {})} className="btn-ghost">
-          Buy 2 Boons — {lobby.settings.buyBoonsCost} chips
-        </button>
-      </div>
-
-      {me.texasTPick && (
-        <div className="card card-blue">
-          <span className="section-label">Texas T-Pick · Locked</span>
-          <p>Your predicted champion: <strong style={{ color: "var(--text)" }}>{playerName(lobby, me.texasTPick)}</strong></p>
-        </div>
-      )}
-
       {allActiveMatches.map((match) => {
         const preBet = lobby.matchPreBet?.[match.id];
         const isParticipant = match.playerA === playerId || match.playerB === playerId;
 
         if (match.status === "in_progress") {
-          return <MatchLocked key={match.id} match={match} lobby={lobby} isParticipant={isParticipant} />;
+          return <MatchLocked key={match.id} match={match} lobby={lobby} isParticipant={isParticipant} me={me} playerId={playerId} />;
         }
 
         return (
@@ -236,13 +211,21 @@ export default function RoundActions({ lobby, me, playerId, autoOpenModal = true
       })}
 
       {error && <p className="error">{error}</p>}
+
+      {me.texasTPick && (
+        <div className="card card-blue" style={{ textAlign: "center" }}>
+          <span className="section-label">Texas T-Pick · Locked</span>
+          <TPickIcon size={56} style={{ marginBottom: 10 }} />
+          <p>Your predicted champion: <strong style={{ color: "var(--text)" }}>{playerName(lobby, me.texasTPick)}</strong></p>
+        </div>
+      )}
     </div>
   );
 }
 
 // ── Locked (in-progress) view ─────────────────────────────────────────────────
 
-function MatchLocked({ match, lobby, isParticipant }) {
+function MatchLocked({ match, lobby, isParticipant, me, playerId }) {
   const handicap = matchHandicap(lobby, match);
   return (
     <div className="card card-red">
@@ -263,9 +246,49 @@ function MatchLocked({ match, lobby, isParticipant }) {
           </span>
         </p>
       )}
+      <MyStakeSummary lobby={lobby} match={match} me={me} playerId={playerId} />
       <p style={{ marginTop: 10, fontSize: "0.8rem", color: "var(--text-dim)" }}>
         Boons, bets, and Trump Card are locked.
       </p>
+    </div>
+  );
+}
+
+// ── "What am I rooting for" — shows the viewer's own prediction/bet on this match ──
+
+function MyStakeSummary({ lobby, match, me, playerId }) {
+  const prediction = me.matchPredictions?.[match.id];
+  const stockBets = lobby.stockBets?.[match.id] || [];
+  const myBet = stockBets.find((b) => b.playerId === playerId);
+  const ridingBet = !myBet && stockBets.find((b) => b.riders?.includes(playerId));
+
+  if (!prediction && !myBet && !ridingBet) return null;
+
+  return (
+    <div style={{
+      marginTop: 12, padding: "10px 12px",
+      background: "var(--gold-dim)", border: "1px solid var(--border-gold)", borderRadius: "var(--r)",
+    }}>
+      <div style={{ fontSize: "0.68rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 6 }}>
+        You're Rooting For
+      </div>
+      {prediction && (
+        <p style={{ fontSize: "0.82rem", margin: 0 }}>
+          Predicted winner: <strong style={{ color: "var(--text)" }}>{playerName(lobby, prediction)}</strong>
+        </p>
+      )}
+      {myBet && (
+        <p style={{ fontSize: "0.82rem", margin: prediction ? "4px 0 0" : 0 }}>
+          Stock Bet: <strong style={{ color: "var(--text)" }}>{myBet.wager} chips</strong> on exactly{" "}
+          <strong style={{ color: "var(--text)" }}>{myBet.stocks} stock{myBet.stocks !== 1 ? "s" : ""}</strong>{" "}
+          → win {myBet.wager * (lobby.settings.stockPool.find((s) => s.stocks === myBet.stocks)?.multiplier ?? 1)}
+        </p>
+      )}
+      {ridingBet && (
+        <p style={{ fontSize: "0.82rem", margin: prediction ? "4px 0 0" : 0 }}>
+          Riding Double on {playerName(lobby, ridingBet.playerId)}'s bet — {ridingBet.stocks} stock{ridingBet.stocks !== 1 ? "s" : ""}
+        </p>
+      )}
     </div>
   );
 }
@@ -760,6 +783,8 @@ function PreBetComplete({ lobby, match, preBet, me, playerId, isParticipant, run
           ⚠ {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% damage handicap
         </p>
       )}
+
+      <MyStakeSummary lobby={lobby} match={match} me={me} playerId={playerId} />
 
       <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", marginTop: 10 }}>
         Betting is closed. Waiting for the host to start the match.
