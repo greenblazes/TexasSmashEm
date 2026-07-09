@@ -149,6 +149,26 @@ export function submitParticipantBoons(lobby, matchId, playerId, amount) {
   return preBet.participants.every((id) => id in preBet.sealedBoons);
 }
 
+// Client-side mirror of server/src/index.js's sanitizeLobby — hides sealed boon
+// amounts during the participant phase so the UI only sees submitted/not-submitted,
+// matching what a real server broadcast would deliver. Non-mutating: the raw amounts
+// stay on the source lobby object for revealAndStartSpectators to consume later.
+export function sanitizeLobby(lobby) {
+  if (!lobby.matchPreBet || Object.keys(lobby.matchPreBet).length === 0) return lobby;
+  const sanitizedPreBet = {};
+  for (const [matchId, preBet] of Object.entries(lobby.matchPreBet)) {
+    if (preBet.phase === "participants") {
+      sanitizedPreBet[matchId] = {
+        ...preBet,
+        sealedBoons: Object.fromEntries(preBet.participants.map((id) => [id, id in preBet.sealedBoons])),
+      };
+    } else {
+      sanitizedPreBet[matchId] = preBet;
+    }
+  }
+  return { ...lobby, matchPreBet: sanitizedPreBet };
+}
+
 export function revealAndStartSpectators(lobby, matchId) {
   const preBet = lobby.matchPreBet[matchId];
   if (!preBet || preBet.phase !== "participants") return;

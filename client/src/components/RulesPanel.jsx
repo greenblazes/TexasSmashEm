@@ -1,4 +1,16 @@
 import React, { useState } from "react";
+import chipIcon from "../assets/icons/chip.png";
+import boonIcon from "../assets/icons/boon.png";
+import cowFeedIcon from "../assets/icons/cowfeed.png";
+import potIcon from "../assets/icons/pot.png";
+import trumpCardIcon from "../assets/icons/trumpcard.png";
+import tPickIcon from "../assets/icons/tpick.png";
+import stockBetIcon from "../assets/icons/stockbet.png";
+import ridingDoubleIcon from "../assets/icons/ridingdouble.png";
+import cleanSweepIcon from "../assets/icons/cleansweep.png";
+import doubleCrossIcon from "../assets/icons/double-crossed.png";
+import bushwhackedIcon from "../assets/icons/bushwhacked.png";
+import showdownIcon from "../assets/icons/showdown.png";
 
 const SECTIONS = [
   {
@@ -6,14 +18,17 @@ const SECTIONS = [
     rules: [
       {
         title: "Ante Up",
+        icon: chipIcon,
         body: "At the start of the tournament every player pays the Ante (default 50 chips) into the pot. This is automatic when the host starts the tournament.",
       },
       {
         title: "Starting Resources",
+        icon: chipIcon,
         body: "Each player begins with 200 chips and 2 Boons. You can buy 2 more Boons at any time for 10 chips.",
       },
       {
         title: "Boons & SMASH Handicap",
+        icon: boonIcon,
         body: (
           <>
             <span>Place Boons on a player before their match to increase their damage taken. The net Boon advantage is converted to extra damage using the scale below. Participants can also place Boons on themselves.</span>
@@ -40,14 +55,17 @@ const SECTIONS = [
       },
       {
         title: "Cow Feed",
+        icon: cowFeedIcon,
         body: "After every match, every spectator (anyone not in that match) receives a flat base amount of chips. On top of that, a bonus pool is split equally among spectators who correctly predicted the winner — the fewer people who guessed right, the bigger the bonus each correct predictor earns. Both amounts are configurable by the host before the tournament starts.",
       },
       {
         title: "Divvy Up",
+        icon: potIcon,
         body: "After the tournament ends and bonuses are applied, the host triggers Divvy Up. The pot is distributed to players weighted by their chip stack — champion first, then in reverse elimination order.",
       },
       {
         title: "Trump Card",
+        icon: trumpCardIcon,
         body: "The loser of the first match of the tournament receives the Trump Card. Play it at any time before a round starts to remove all Boons currently placed on a player.",
       },
     ],
@@ -57,34 +75,42 @@ const SECTIONS = [
     rules: [
       {
         title: "Texas T-Pick",
+        icon: tPickIcon,
         body: "Before the tournament starts, every player secretly picks who they think will win the whole tournament. Picks are locked in once play begins. If your pick wins, you earn a Cow Feed bonus.",
       },
       {
         title: "Match Winner Prediction",
+        icon: tPickIcon,
         body: "Spectators (players not in the current match) can predict who will win each match. Predictions can only be made during your own turn in the pre-match betting popup — not before spectator turns begin, and not after they end. Correct predictions earn chips via Cow Feed.",
       },
       {
         title: "Stock Bets",
+        icon: stockBetIcon,
         body: "Optional, and only for eliminated players. On top of your Match Prediction, wager chips on how many stocks that predicted winner will have left when they win: 1, 2, or 3. It pays only if your Match Prediction is correct AND the winner finishes with exactly that many stocks. Win = wager × the slot's multiplier (a flawless 3-stock win pays the most). Each stock slot can be claimed by only one player per match; a wrong bet loses the wager to the pot.",
       },
       {
         title: "Riding Double",
+        icon: ridingDoubleIcon,
         body: "If you're eliminated and out of chips, you can piggyback on another player's Stock Bet instead of placing your own. If that bet wins, the winnings are split: the original bettor keeps ½, you get ⅓, and the remainder is lost.",
       },
       {
         title: "Clean Sweep",
+        icon: cleanSweepIcon,
         body: "Awarded at the end of the tournament to any player who correctly predicted the winner of every single match. Matches you played in yourself don't count — but every other match must have a correct prediction. Missing a prediction disqualifies you.",
       },
       {
         title: "Double-Cross",
+        icon: doubleCrossIcon,
         body: "Awarded at the end of the tournament to any player who went up against their own Texas T-Pick in a match and won. Beating the person you predicted to win the whole tournament earns you bonus chips.",
       },
       {
         title: "Bushwhacked",
+        icon: bushwhackedIcon,
         body: "Applied at the end of the tournament to any player who went up against their own Texas T-Pick in a match and lost. Getting eliminated by the person you picked to win the whole tournament costs you chips.",
       },
       {
         title: "Showdown",
+        icon: showdownIcon,
         body: "Awarded at the end of the tournament to any player who faced their own Texas T-Pick in the final round and won. Defeating the person you predicted to win the whole tournament in the championship match earns you bonus chips.",
       },
     ],
@@ -164,11 +190,15 @@ export default function RulesPanel() {
                         textAlign: "left",
                       }}
                     >
-                      <span>{rule.title}</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <img src={rule.icon} alt="" width={20} height={20} style={{ objectFit: "contain", flexShrink: 0 }} />
+                        {rule.title}
+                      </span>
                       <span style={{
                         color: "var(--gold)", fontSize: "0.7rem",
                         transform: expanded === key ? "rotate(90deg)" : "rotate(0)",
                         transition: "transform 0.18s ease", display: "inline-block",
+                        flexShrink: 0,
                       }}>
                         ▶
                       </span>
