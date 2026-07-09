@@ -30,8 +30,8 @@ export default function Admin() {
     if (!res.ok) alert(res.error);
   }
 
-  async function adjustPoints(targetPlayerId, delta) {
-    const res = await emitAck("host:adjustPoints", { code: lobby.code, playerId, targetPlayerId, delta });
+  async function adjustChips(targetPlayerId, delta) {
+    const res = await emitAck("host:adjustChips", { code: lobby.code, playerId, targetPlayerId, delta });
     if (!res.ok) alert(res.error);
   }
 
@@ -112,34 +112,32 @@ export default function Admin() {
       <div className="card">
         <span className="section-label">Players</span>
         <div style={{ overflowX: "auto" }}>
-          <table className="points-table">
+          <table className="admin-table">
             <thead>
               <tr>
                 <th>Player</th>
-                <th>Points</th>
                 <th>Chips</th>
                 <th>Boons</th>
                 <th>T-Pick</th>
                 <th>Trump</th>
                 <th>Out</th>
-                <th>Adjust Points</th>
+                <th>Adjust Chips</th>
               </tr>
             </thead>
             <tbody>
               {lobby.players.map((p) => (
                 <tr key={p.id}>
                   <td style={{ color: "var(--text)", fontWeight: 500 }}>{p.name}</td>
-                  <td style={{ color: "var(--green)", fontVariantNumeric: "tabular-nums" }}>{p.points}</td>
                   <td style={{ fontVariantNumeric: "tabular-nums" }}>{p.chips}</td>
                   <td style={{ color: "var(--blue-light)" }}>{p.boons}</td>
                   <td>{lobby.players.find((x) => x.id === p.texasTPick)?.name || "—"}</td>
                   <td>{p.hasTrumpCard ? <TrumpIcon size={22} /> : ""}</td>
                   <td>{p.eliminated ? "Yes" : "No"}</td>
                   <td>
-                    <button onClick={() => adjustPoints(p.id, 1)}>+1</button>
-                    <button onClick={() => adjustPoints(p.id, -1)}>-1</button>
-                    <button onClick={() => adjustPoints(p.id, 10)}>+10</button>
-                    <button onClick={() => adjustPoints(p.id, -10)}>-10</button>
+                    <button onClick={() => adjustChips(p.id, 1)}>+1</button>
+                    <button onClick={() => adjustChips(p.id, -1)}>-1</button>
+                    <button onClick={() => adjustChips(p.id, 10)}>+10</button>
+                    <button onClick={() => adjustChips(p.id, -10)}>-10</button>
                   </td>
                 </tr>
               ))}
@@ -201,7 +199,7 @@ function SettingsEditor({ lobby, playerId }) {
   }
 
   function updateBonus(field, value) {
-    setSettings({ ...settings, bonusPoints: { ...settings.bonusPoints, [field]: Number(value) } });
+    setSettings({ ...settings, bonusChips: { ...settings.bonusChips, [field]: Number(value) } });
   }
 
   return (
@@ -250,18 +248,18 @@ function SettingsEditor({ lobby, playerId }) {
         </div>
       ))}
 
-      <h3>Bonus / Penalty Points</h3>
+      <h3>Bonus / Penalty Chips</h3>
       <div className="settings-row">
         <label>Clean Sweep</label>
-        <input type="number" value={settings.bonusPoints.cleanSweep} onChange={(e) => updateBonus("cleanSweep", e.target.value)} style={{ width: 70, display: "inline-block" }} />
+        <input type="number" value={settings.bonusChips.cleanSweep} onChange={(e) => updateBonus("cleanSweep", e.target.value)} style={{ width: 70, display: "inline-block" }} />
         <label style={{ minWidth: 100 }}>Double-Cross</label>
-        <input type="number" value={settings.bonusPoints.doubleCross} onChange={(e) => updateBonus("doubleCross", e.target.value)} style={{ width: 70, display: "inline-block" }} />
+        <input type="number" value={settings.bonusChips.doubleCross} onChange={(e) => updateBonus("doubleCross", e.target.value)} style={{ width: 70, display: "inline-block" }} />
       </div>
       <div className="settings-row">
         <label>Bushwhacked</label>
-        <input type="number" value={settings.bonusPoints.bushwhacked} onChange={(e) => updateBonus("bushwhacked", e.target.value)} style={{ width: 70, display: "inline-block" }} />
+        <input type="number" value={settings.bonusChips.bushwhacked} onChange={(e) => updateBonus("bushwhacked", e.target.value)} style={{ width: 70, display: "inline-block" }} />
         <label style={{ minWidth: 100 }}>Showdown</label>
-        <input type="number" value={settings.bonusPoints.showdown} onChange={(e) => updateBonus("showdown", e.target.value)} style={{ width: 70, display: "inline-block" }} />
+        <input type="number" value={settings.bonusChips.showdown} onChange={(e) => updateBonus("showdown", e.target.value)} style={{ width: 70, display: "inline-block" }} />
       </div>
 
       <button className="btn-gold" onClick={save} style={{ marginTop: 8 }}>Save Settings</button>

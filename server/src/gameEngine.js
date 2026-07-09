@@ -410,7 +410,7 @@ export function reportMatchResult(lobby, matchId, winnerId, remainingStocks) {
 }
 
 function applyEndOfTournamentBonuses(lobby) {
-  const { bonusPoints } = lobby.settings;
+  const { bonusChips } = lobby.settings;
   const champion = lobby.champion;
   const allMatches = lobby.bracket.rounds.flat().filter((m) => m.winnerId);
   const finalMatch = lobby.bracket.rounds[lobby.bracket.rounds.length - 1][0];
@@ -426,7 +426,7 @@ function applyEndOfTournamentBonuses(lobby) {
       const allCorrect = eligibleMatches.every(
         (m) => player.matchPredictions[m.id] === m.winnerId
       );
-      if (allCorrect) player.points += bonusPoints.cleanSweep;
+      if (allCorrect) player.chips += bonusChips.cleanSweep;
     }
 
     // Double-Cross / Bushwhacked: player faced their own Texas T-Pick at some point.
@@ -438,9 +438,9 @@ function applyEndOfTournamentBonuses(lobby) {
       );
       for (const m of matchesAgainstPick) {
         if (m.winnerId === player.id) {
-          player.points += bonusPoints.doubleCross;
+          player.chips += bonusChips.doubleCross;
         } else {
-          player.points += bonusPoints.bushwhacked;
+          player.chips += bonusChips.bushwhacked;
         }
       }
     }
@@ -451,14 +451,14 @@ function applyEndOfTournamentBonuses(lobby) {
       player.texasTPick &&
       (finalMatch.playerA === player.texasTPick || finalMatch.playerB === player.texasTPick)
     ) {
-      player.points += bonusPoints.showdown;
+      player.chips += bonusChips.showdown;
     }
   }
 }
 
 // Divvy Up: distribute the Pot in a loop ordered [Tournament Winner, most recent
 // loser, next most recent loser, ...], giving each player chips equal to their
-// "Weight of Winnings" (modeled here as their points score, floored at 0) per
+// "Weight of Winnings" (modeled here as their current chip stack, floored at 1) per
 // lap, looping until the Pot is exhausted. The doc references Weight of Winnings
 // without giving its exact formula, so this is the best-effort reading — the
 // host can re-run with adjusted settings if it doesn't match the physical game.
@@ -479,7 +479,7 @@ export function divvyUp(lobby) {
   const weights = new Map(
     uniqueOrder.map((id) => {
       const p = lobby.players.find((pl) => pl.id === id);
-      return [id, Math.max(0, p?.points || 0) || 1];
+      return [id, Math.max(0, p?.chips || 0) || 1];
     })
   );
 

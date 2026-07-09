@@ -44,7 +44,7 @@ const SECTIONS = [
       },
       {
         title: "Divvy Up",
-        body: "After the tournament ends and bonuses are applied, the host triggers Divvy Up. The pot is distributed to players weighted by their points — champion first, then in reverse elimination order.",
+        body: "After the tournament ends and bonuses are applied, the host triggers Divvy Up. The pot is distributed to players weighted by their chip stack — champion first, then in reverse elimination order.",
       },
       {
         title: "Trump Card",
@@ -61,7 +61,7 @@ const SECTIONS = [
       },
       {
         title: "Match Winner Prediction",
-        body: "Spectators (players not in the current match) can predict who will win each match. Predictions can only be made during your own turn in the pre-match betting popup — not before spectator turns begin, and not after they end. Correct predictions earn points via Cow Feed.",
+        body: "Spectators (players not in the current match) can predict who will win each match. Predictions can only be made during your own turn in the pre-match betting popup — not before spectator turns begin, and not after they end. Correct predictions earn chips via Cow Feed.",
       },
       {
         title: "Stock Bets",
@@ -77,15 +77,15 @@ const SECTIONS = [
       },
       {
         title: "Double-Cross",
-        body: "Awarded at the end of the tournament to any player who went up against their own Texas T-Pick in a match and won. Beating the person you predicted to win the whole tournament earns you bonus points.",
+        body: "Awarded at the end of the tournament to any player who went up against their own Texas T-Pick in a match and won. Beating the person you predicted to win the whole tournament earns you bonus chips.",
       },
       {
         title: "Bushwhacked",
-        body: "Awarded at the end of the tournament to any player who went up against their own Texas T-Pick in a match and lost. Getting eliminated by the person you picked to win the whole tournament earns you bonus points.",
+        body: "Applied at the end of the tournament to any player who went up against their own Texas T-Pick in a match and lost. Getting eliminated by the person you picked to win the whole tournament costs you chips.",
       },
       {
         title: "Showdown",
-        body: "Awarded at the end of the tournament to any player who faced their own Texas T-Pick in the final round and won. Defeating the person you predicted to win the whole tournament in the championship match earns you bonus points.",
+        body: "Awarded at the end of the tournament to any player who faced their own Texas T-Pick in the final round and won. Defeating the person you predicted to win the whole tournament in the championship match earns you bonus chips.",
       },
     ],
   },

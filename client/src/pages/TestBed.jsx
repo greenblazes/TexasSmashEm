@@ -13,10 +13,10 @@ import Bracket from "./Bracket.jsx";
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
 const PLAYERS = {
-  p1: { id: "p1", name: "Alice",   chips: 180, boons: 3, points: 25, eliminated: false, texasTPick: "p3", hasTrumpCard: false, matchPredictions: {}, connected: true, isHost: true },
-  p2: { id: "p2", name: "Bob",     chips: 120, boons: 1, points: 10, eliminated: false, texasTPick: "p1", hasTrumpCard: true,  matchPredictions: { m1: "p1" }, connected: true },
-  p3: { id: "p3", name: "Charlie", chips: 50,  boons: 0, points: 5,  eliminated: true,  texasTPick: "p2", hasTrumpCard: false, matchPredictions: {}, connected: true },
-  p4: { id: "p4", name: "Diana",   chips: 0,   boons: 2, points: 30, eliminated: true,  texasTPick: "p1", hasTrumpCard: false, matchPredictions: { m1: "p2" }, connected: true },
+  p1: { id: "p1", name: "Alice",   chips: 180, boons: 3, eliminated: false, texasTPick: "p3", hasTrumpCard: false, matchPredictions: {}, connected: true, isHost: true },
+  p2: { id: "p2", name: "Bob",     chips: 120, boons: 1, eliminated: false, texasTPick: "p1", hasTrumpCard: true,  matchPredictions: { m1: "p1" }, connected: true },
+  p3: { id: "p3", name: "Charlie", chips: 50,  boons: 0, eliminated: true,  texasTPick: "p2", hasTrumpCard: false, matchPredictions: {}, connected: true },
+  p4: { id: "p4", name: "Diana",   chips: 0,   boons: 2, eliminated: true,  texasTPick: "p1", hasTrumpCard: false, matchPredictions: { m1: "p2" }, connected: true },
 };
 
 const BASE_MATCH = {
@@ -245,10 +245,6 @@ function PillsSection() {
           <ChipIcon size={22} className="chip-icon" />
           <span className="chip-value">850</span>
         </span>
-        <span className="points-pill">
-          <span className="points-pill-icon">★</span>
-          <span className="points-pill-value">120</span>
-        </span>
         <span className="trump-pill"><TrumpIcon size={18} /> Trump Card</span>
         <span className="notif">ℹ Info notification</span>
         <span className="notif notif-warn">⚠ Warning notification</span>
@@ -272,7 +268,7 @@ function DemoRewardPopup({ reward, index, onDone }) {
   useEffect(() => {
     const originX = window.innerWidth / 2;
     const originY = window.innerHeight / 2 + index * 74;
-    const target = document.querySelector(reward.kind === "chips" ? ".chip-pill" : ".points-pill");
+    const target = document.querySelector(".chip-pill");
     let dx = 0, dy = -window.innerHeight * 0.35;
     if (target) {
       const r = target.getBoundingClientRect();
@@ -287,7 +283,7 @@ function DemoRewardPopup({ reward, index, onDone }) {
   return (
     <div className={`reward-popup reward-popup-${reward.kind}`} style={vars} onAnimationEnd={onDone}>
       <span className="reward-popup-amount">+{reward.amount}</span>
-      <span className="reward-popup-label">{reward.kind === "chips" ? "Chips" : "Points"}</span>
+      <span className="reward-popup-label">Chips</span>
     </div>
   );
 }
@@ -295,21 +291,19 @@ function DemoRewardPopup({ reward, index, onDone }) {
 function RewardPopupSection() {
   const [demoRewards, setDemoRewards] = useState([]);
 
-  function fire(kind) {
-    const amount = kind === "chips" ? 75 : 40;
-    setDemoRewards((r) => [...r, { id: Date.now() + Math.random(), kind, amount }]);
+  function fire() {
+    setDemoRewards((r) => [...r, { id: Date.now() + Math.random(), kind: "chips", amount: 75 }]);
   }
 
   return (
-    <Section id="reward-popup" label="Reward Popup (chips / points gained)">
+    <Section id="reward-popup" label="Reward Popup (chips gained)">
       <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", marginBottom: 16 }}>
-        Fires automatically in production whenever a player's chips or points increase — Cow Feed,
+        Fires automatically in production whenever a player's chips increase — Cow Feed,
         Stock Bet payouts, Divvy Up, or the end-of-tournament bonuses. Pops up center-screen, holds,
-        then flies into the matching pill above (scroll up to watch it land).
+        then flies into the chip pill above (scroll up to watch it land).
       </p>
       <Row gap={10}>
-        <button className="btn-gold" onClick={() => fire("chips")}>Simulate +75 Chips</button>
-        <button className="btn-blue" onClick={() => fire("points")}>Simulate +40 Points</button>
+        <button className="btn-gold" onClick={fire}>Simulate +75 Chips</button>
       </Row>
       {demoRewards.map((r, i) => (
         <DemoRewardPopup
@@ -334,10 +328,6 @@ function StatsSection() {
         <div className="stat-tile">
           <div className="stat-value" style={{ color: "var(--blue-light)" }}>4</div>
           <div className="stat-label">Boons</div>
-        </div>
-        <div className="stat-tile">
-          <div className="stat-value" style={{ color: "var(--green)" }}>120</div>
-          <div className="stat-label">Points</div>
         </div>
         <div className="stat-tile">
           <div className="stat-value" style={{ color: "var(--red)" }}>3</div>
@@ -419,7 +409,7 @@ function ParticipantPhaseSection() {
     turnDurationMs: 30000,
     deadline: Date.now() + 22000,
     participants: ["p1", "p2"],
-    sealedBoons: { p1: true }, // p1 submitted, p2 hasn't
+    sealedBoons: {}, // neither participant has submitted yet
     spectatorOrder: ["p3", "p4"],
     currentTurnIdx: 0,
     turnActions: {},
@@ -434,6 +424,7 @@ function ParticipantPhaseSection() {
         lobby={makeLobby("ready", preBet)}
         me={{ ...PLAYERS.p1, boons: 3 }}
         playerId="p1"
+        autoOpenModal={false}
       />
 
       <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", margin: "24px 0 16px" }}>
@@ -443,6 +434,7 @@ function ParticipantPhaseSection() {
         lobby={makeLobby("ready", preBet)}
         me={{ ...PLAYERS.p3 }}
         playerId="p3"
+        autoOpenModal={false}
       />
     </Section>
   );
@@ -477,6 +469,7 @@ function SpectatorPhaseSection() {
         lobby={makeLobby("ready", preBet, { stockBets: { m1: [] } })}
         me={{ ...PLAYERS.p3 }}
         playerId="p3"
+        autoOpenModal={false}
       />
 
       <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", margin: "24px 0 16px" }}>
@@ -487,6 +480,7 @@ function SpectatorPhaseSection() {
         lobby={makeLobby("ready", preBetP4Turn)}
         me={{ ...PLAYERS.p4 }}
         playerId="p4"
+        autoOpenModal={false}
       />
     </Section>
   );

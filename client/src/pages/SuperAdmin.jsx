@@ -94,7 +94,7 @@ export default function SuperAdmin() {
           <p>No active lobbies.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table className="points-table">
+            <table className="admin-table">
               <thead>
                 <tr>
                   <th>Code</th>
