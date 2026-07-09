@@ -5,6 +5,7 @@ import cowFeedIcon from "../assets/icons/cowfeed.png";
 import potIcon from "../assets/icons/pot.png";
 import trumpCardIcon from "../assets/icons/trumpcard.png";
 import tPickIcon from "../assets/icons/tpick.png";
+import matchPickIcon from "../assets/icons/match-prediction.png";
 import stockBetIcon from "../assets/icons/stockbet.png";
 import ridingDoubleIcon from "../assets/icons/ridingdouble.png";
 import cleanSweepIcon from "../assets/icons/cleansweep.png";
@@ -80,7 +81,7 @@ const SECTIONS = [
       },
       {
         title: "Match Winner Prediction",
-        icon: tPickIcon,
+        icon: matchPickIcon,
         body: "Spectators (players not in the current match) can predict who will win each match. Predictions can only be made during your own turn in the pre-match betting popup — not before spectator turns begin, and not after they end. Correct predictions earn chips via Cow Feed.",
       },
       {
