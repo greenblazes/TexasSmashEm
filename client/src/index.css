@@ -442,6 +442,218 @@ select {
 }
 
 /* ═══════════════════════════════════
+   BETTING MODAL
+═══════════════════════════════════ */
+.betting-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: fade-in 0.18s ease;
+}
+
+.betting-modal {
+  background: var(--surface);
+  border: 2px solid var(--border-gold);
+  border-radius: 20px;
+  width: 100%; max-width: 400px;
+  max-height: 92vh; overflow-y: auto;
+  box-shadow: 0 0 50px rgba(212,168,50,0.2), 0 12px 48px rgba(0,0,0,0.7);
+  animation: modal-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes modal-pop {
+  from { opacity:0; transform: scale(0.82) translateY(28px); }
+  to   { opacity:1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+
+.modal-timer {
+  text-align: center; padding: 22px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.modal-timer-digits {
+  font-family: var(--font-d);
+  font-size: 4rem; line-height: 1; font-weight: 900;
+  letter-spacing: -0.02em;
+  transition: color 0.4s;
+}
+
+.modal-timer-label {
+  font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--text-dim); margin-top: 3px;
+}
+
+.modal-timer-bar {
+  height: 5px; border-radius: 3px; overflow: hidden;
+  background: var(--border); margin: 12px 20px 0;
+}
+
+.modal-timer-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.25s linear, background 0.4s;
+}
+
+.modal-body {
+  padding: 18px 20px 22px;
+}
+
+.modal-section {
+  margin-bottom: 20px;
+}
+
+.modal-section-label {
+  font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-dim); font-weight: 700; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.modal-section-label::before,
+.modal-section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.modal-vs-row {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  gap: 10px; align-items: center; margin-bottom: 14px;
+}
+
+.modal-player-card {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 10px 12px; text-align: center;
+}
+
+.modal-player-card.side-a { border-color: rgba(91,164,245,0.35); }
+.modal-player-card.side-b { border-color: rgba(61,186,110,0.35); }
+
+.modal-player-name {
+  font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; margin-bottom: 5px;
+}
+
+.modal-player-boons {
+  display: flex; flex-wrap: wrap; gap: 3px; justify-content: center;
+  min-height: 14px; align-items: center;
+}
+
+.modal-player-boons .boon-pip { width: 10px; height: 10px; margin-right: 0; }
+.modal-player-boons .boon-count {
+  font-size: 0.72rem; color: var(--text-dim);
+}
+
+.boon-stepper-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 10px 14px; margin-bottom: 8px;
+}
+
+.boon-stepper-label {
+  font-size: 0.82rem; font-weight: 600; color: var(--text-mid);
+}
+
+.boon-stepper-controls {
+  display: flex; align-items: center; gap: 14px;
+}
+
+.boon-stepper-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2px solid var(--border-gold);
+  background: var(--surface-3); color: var(--gold);
+  font-size: 1.3rem; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+  line-height: 1;
+}
+
+.boon-stepper-btn:hover:not(:disabled) { background: var(--gold-dim); }
+.boon-stepper-btn:active:not(:disabled) { transform: scale(0.9); }
+.boon-stepper-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--border); color: var(--text-dim); }
+
+.boon-stepper-value {
+  font-family: var(--font-d); font-size: 1.5rem; font-weight: 900;
+  color: var(--text); min-width: 28px; text-align: center; line-height: 1;
+}
+
+.modal-remaining {
+  font-size: 0.75rem; color: var(--text-dim); text-align: center; margin-top: 4px;
+}
+
+.prediction-toggle {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+
+.prediction-btn {
+  padding: 10px; border-radius: var(--r); font-size: 0.8rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  border: 2px solid var(--border); background: transparent;
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+
+.prediction-btn.selected-a {
+  border-color: var(--blue-light); background: rgba(91,164,245,0.1);
+  color: var(--blue-light);
+}
+
+.prediction-btn.selected-b {
+  border-color: var(--green); background: rgba(61,186,110,0.1);
+  color: var(--green);
+}
+
+.prediction-btn:hover:not(.selected-a):not(.selected-b) {
+  border-color: var(--border-gold); color: var(--text);
+}
+
+.stock-bet-toggle {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+
+.stock-bet-btn {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 12px 6px 10px;
+  border: 2px solid var(--border); border-radius: var(--r-lg);
+  background: var(--surface-2); cursor: pointer;
+  transition: all 0.15s;
+}
+
+.stock-bet-btn:hover:not(:disabled):not(.selected) {
+  border-color: var(--border-gold);
+}
+
+.stock-bet-btn.selected {
+  border-color: var(--gold); background: var(--gold-dim);
+}
+
+.stock-bet-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.stock-bet-num {
+  font-family: var(--font-d); font-size: 1.7rem; font-weight: 900;
+  color: var(--text); line-height: 1;
+}
+
+.stock-bet-btn.selected .stock-bet-num { color: var(--gold-light); }
+
+.stock-bet-mult {
+  font-size: 0.72rem; font-weight: 700; color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+.stock-bet-btn.selected .stock-bet-mult { color: var(--gold); }
+
+.stock-bet-taken {
+  position: absolute; top: 3px; right: 5px;
+  font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--red);
+}
+
+/* ═══════════════════════════════════
    BOON PIPS
 ═══════════════════════════════════ */
 .boon-pip {

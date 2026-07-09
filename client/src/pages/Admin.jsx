@@ -237,13 +237,15 @@ function SettingsEditor({ lobby, playerId }) {
         <input type="number" value={settings.cowFeedBonusMultiplier} onChange={(e) => setSettings({ ...settings, cowFeedBonusMultiplier: Number(e.target.value) })} style={{ width: 80, display: "inline-block" }} />
       </div>
 
-      <h3>Stock Pool — Payout Multipliers</h3>
+      <h3>Stock Bets — Payout Multipliers</h3>
+      <p style={{ fontSize: "0.78rem", color: "var(--text-dim)", marginTop: -4, marginBottom: 10 }}>
+        Eliminated players wager chips that the winner they predicted finishes with exactly this many stocks. Win = wager × multiplier.
+      </p>
       {settings.stockPool.map((s, idx) => (
         <div className="settings-row" key={idx}>
-          <label>Stocks</label>
-          <input type="number" value={s.stocks} onChange={(e) => updateStockSlot(idx, "stocks", e.target.value)} style={{ width: 60, display: "inline-block" }} />
-          <label style={{ minWidth: 80 }}>Multiplier</label>
-          <input type="number" value={s.multiplier} onChange={(e) => updateStockSlot(idx, "multiplier", e.target.value)} style={{ width: 60, display: "inline-block" }} />
+          <label style={{ minWidth: 80 }}>{s.stocks} stock{s.stocks !== 1 ? "s" : ""} left</label>
+          <label style={{ minWidth: 80 }}>Multiplier ×</label>
+          <input type="number" min={1} value={s.multiplier} onChange={(e) => updateStockSlot(idx, "multiplier", e.target.value)} style={{ width: 60, display: "inline-block" }} />
         </div>
       ))}
 

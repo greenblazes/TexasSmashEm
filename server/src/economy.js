@@ -11,16 +11,16 @@ export const DEFAULTS = {
   cowFeedBase: 10,         // chips given to every spectator after each match
   cowFeedBonusMultiplier: 20, // bonus pool = this × number of spectators, split among correct predictors
   turnDurationMs: 30000,   // ms each player has to place boons/bets before their turn auto-advances
-  // 6 Stock Pool slots representing possible remaining-stock counts at match end,
-  // and the multiplier printed on that slot. Exact printed values aren't in the
-  // text rules, so these are reasonable defaults the host can edit in Admin.
+  // Stock Bets: an eliminated player wagers chips that the match victor (the player
+  // they picked in their Match Prediction) will finish with exactly N stocks remaining.
+  // A 3-stock match means the winner ends with 1, 2, or 3 stocks — so there are three
+  // slots. A 3-stock (flawless) win is rarest, so it pays the most. Multipliers are
+  // host-editable defaults. Win = wager × multiplier, and ONLY if the bettor's Match
+  // Prediction was also correct.
   stockPool: [
-    { stocks: 0, multiplier: 10 },
-    { stocks: 1, multiplier: 6 },
-    { stocks: 2, multiplier: 4 },
-    { stocks: 3, multiplier: 3 },
-    { stocks: 4, multiplier: 2 },
-    { stocks: 5, multiplier: 1 },
+    { stocks: 1, multiplier: 2 },
+    { stocks: 2, multiplier: 3 },
+    { stocks: 3, multiplier: 5 },
   ],
   // Point bonus/penalty magnitudes — not specified numerically in the rules doc.
   bonusPoints: {

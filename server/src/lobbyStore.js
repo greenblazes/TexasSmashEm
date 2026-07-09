@@ -63,7 +63,7 @@ export function createLobby(hostName) {
     pot: 0,
     firstMatchCompleted: false,
     boonPlacements: {}, // matchId -> { participantId: totalBoonsPlaced }
-    stockBets: {}, // matchId -> [{ playerId, stocks, wager, riders: [] }]
+    stockBets: {}, // matchId -> [{ playerId, stocks, wager, predictedWinnerId, riders: [] }]
     matchPreBet: {}, // matchId -> pre-bet phase state
     champion: null,
   };
