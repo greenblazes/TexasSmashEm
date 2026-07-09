@@ -139,9 +139,11 @@ export default function TestTournament() {
       {/* Main game view — the real app UI, driven by the mock lobby */}
       <main style={{ flex: 1, padding: "24px 28px 24px", maxWidth: 760 }}>
         <div className="page-header" style={{ margin: "-24px -28px 24px" }}>
+          <div style={{ textAlign: "center" }}>
+            <span className="wordmark">Texas SMASH'em</span>
+          </div>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
-              <span className="wordmark">Texas SMASH'em</span>
               <span className="page-subtitle">
                 Simulator · {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
                 {" · viewing as "}<strong>{me.name}</strong>{me.id === hostId ? " (Host)" : ""}

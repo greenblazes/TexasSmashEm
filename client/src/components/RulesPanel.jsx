@@ -94,65 +94,43 @@ const SECTIONS = [
 export default function RulesPanel() {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(null);
+  // The open panel always sits above the other (closed) one — z-index tier
+  // is driven directly by this panel's own open state, not shared/global
+  // state, so it can never end up stuck behind a panel that isn't showing.
+  const isActive = open;
 
   function toggleRule(idx) {
     setExpanded(expanded === idx ? null : idx);
   }
 
+  function handleToggle() {
+    setOpen((o) => !o);
+  }
+
+  function handleClose() {
+    setOpen(false);
+  }
+
   return (
     <>
-      {/* Backdrop */}
       {open && (
         <div
-          onClick={() => setOpen(false)}
-          style={{
-            position: "fixed", inset: 0, zIndex: 998,
-            background: "rgba(0,0,0,0.4)",
-            backdropFilter: "blur(2px)",
-          }}
+          onClick={handleClose}
+          className={`side-panel-backdrop ${isActive ? "side-panel-backdrop-z-active" : "side-panel-backdrop-z-inactive"}`}
         />
       )}
 
-      {/* Side panel */}
       <div
-        style={{
-          position: "fixed",
-          top: 0, right: 0, bottom: 0,
-          width: 340,
-          zIndex: 999,
-          transform: open ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
-          background: "var(--surface)",
-          borderLeft: "1px solid var(--border-gold)",
-          boxShadow: open ? "-8px 0 40px rgba(0,0,0,0.6)" : "none",
-          display: "flex",
-          flexDirection: "column",
-        }}
+        className={`side-panel side-panel-right ${open ? "is-open" : ""} ${isActive ? "side-panel-z-active" : "side-panel-z-inactive"}`}
       >
-        {/* Panel header */}
-        <div style={{
-          padding: "18px 20px 14px",
-          borderBottom: "1px solid var(--border)",
-          background: "linear-gradient(90deg, rgba(212,168,50,0.07), transparent)",
-          flexShrink: 0,
-        }}>
+        <div className="side-panel-header">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
-              <div style={{
-                fontFamily: "var(--font-d)", fontSize: "1.1rem",
-                letterSpacing: "0.12em", textTransform: "uppercase",
-                background: "linear-gradient(135deg,#D4A832,#F0C84A)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}>
-                Game Rules
-              </div>
-              <div style={{ fontSize: "0.65rem", letterSpacing: "0.12em", color: "var(--text-dim)", marginTop: 2 }}>
-                TEXAS SMASH'EM · REFERENCE
-              </div>
+              <div className="side-panel-title">Game Rules</div>
+              <div className="side-panel-subtitle">TEXAS SMASH'EM · REFERENCE</div>
             </div>
             <button
-              onClick={() => setOpen(false)}
+              onClick={handleClose}
               className="btn-ghost"
               style={{ padding: "6px 10px", fontSize: "0.75rem" }}
             >
@@ -161,8 +139,7 @@ export default function RulesPanel() {
           </div>
         </div>
 
-        {/* Scrollable rule list */}
-        <div style={{ overflowY: "auto", flex: 1, padding: "6px 0" }}>
+        <div className="side-panel-body" style={{ padding: "6px 0" }}>
           {SECTIONS.map((section) => (
             <div key={section.heading}>
               <div style={{
@@ -211,37 +188,14 @@ export default function RulesPanel() {
           ))}
         </div>
 
-        {/* Footer */}
-        <div style={{
-          padding: "12px 20px", borderTop: "1px solid var(--border)",
-          fontSize: "0.65rem", color: "var(--text-dim)", letterSpacing: "0.08em",
-          flexShrink: 0,
-        }}>
+        <div className="side-panel-footer">
           {SECTIONS.reduce((n, s) => n + s.rules.length, 0)} rules · Tap any rule to expand
         </div>
       </div>
 
-      {/* Tab trigger */}
       <button
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          position: "fixed",
-          right: open ? 340 : 0,
-          top: "50%",
-          transform: "translateY(-50%)",
-          zIndex: 1000,
-          transition: "right 0.28s cubic-bezier(0.4,0,0.2,1)",
-          writingMode: "vertical-rl",
-          textOrientation: "mixed",
-          padding: "10px 6px",
-          borderRadius: "8px 0 0 8px",
-          background: "linear-gradient(180deg,#D4A832,#9E7A1E)",
-          color: "#07050F",
-          boxShadow: "-4px 0 18px rgba(212,168,50,0.35)",
-          fontSize: "0.72rem",
-          letterSpacing: "0.18em",
-          fontWeight: 700,
-        }}
+        onClick={handleToggle}
+        className={`side-panel-tab side-panel-tab-right ${open ? "is-open" : ""} ${isActive ? "side-panel-tab-z-active" : "side-panel-tab-z-inactive"}`}
       >
         RULES
       </button>

@@ -1,14 +1,12 @@
 import { useState } from "react";
-import Bracket from "../pages/Bracket.jsx";
+import AdminTools from "./AdminTools.jsx";
 
-export default function BracketPanel({ bracket, highlightPlayerId }) {
+export default function AdminPanel({ lobby, playerId }) {
   const [open, setOpen] = useState(false);
   // The open panel always sits above the other (closed) one — z-index tier
   // is driven directly by this panel's own open state, not shared/global
   // state, so it can never end up stuck behind a panel that isn't showing.
   const isActive = open;
-
-  if (!bracket) return null;
 
   function handleToggle() {
     setOpen((o) => !o);
@@ -28,13 +26,13 @@ export default function BracketPanel({ bracket, highlightPlayerId }) {
       )}
 
       <div
-        className={`side-panel side-panel-left ${open ? "is-open" : ""} ${isActive ? "side-panel-z-active" : "side-panel-z-inactive"}`}
+        className={`side-panel side-panel-right side-panel-blue ${open ? "is-open" : ""} ${isActive ? "side-panel-z-active" : "side-panel-z-inactive"}`}
       >
-        <div className="side-panel-header">
+        <div className="side-panel-header side-panel-header-blue">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
-              <div className="side-panel-title">Bracket</div>
-              <div className="side-panel-subtitle">TEXAS SMASH'EM · UPCOMING MATCHES</div>
+              <div className="side-panel-title side-panel-title-blue">Host Admin</div>
+              <div className="side-panel-subtitle">LOBBY {lobby.code} · {lobby.status.toUpperCase()} · POT {lobby.pot}</div>
             </div>
             <button
               onClick={handleClose}
@@ -47,15 +45,15 @@ export default function BracketPanel({ bracket, highlightPlayerId }) {
         </div>
 
         <div className="side-panel-body" style={{ padding: "14px 20px" }}>
-          <Bracket bracket={bracket} highlightPlayerId={highlightPlayerId} />
+          <AdminTools lobby={lobby} playerId={playerId} />
         </div>
       </div>
 
       <button
         onClick={handleToggle}
-        className={`side-panel-tab side-panel-tab-left ${open ? "is-open" : ""} ${isActive ? "side-panel-tab-z-active" : "side-panel-tab-z-inactive"}`}
+        className={`side-panel-tab side-panel-tab-right side-panel-tab-admin ${open ? "is-open" : ""} ${isActive ? "side-panel-tab-z-active" : "side-panel-tab-z-inactive"}`}
       >
-        BRACKET
+        ADMIN
       </button>
     </>
   );

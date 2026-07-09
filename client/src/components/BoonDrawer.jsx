@@ -24,7 +24,7 @@ export default function BoonDrawer({ open, cost, chips, onBuy }) {
       }}
     >
       <div style={{
-        padding: "10px 20px 12px",
+        padding: "10px 20px 0px",
         borderTop: "1px solid var(--border)",
         display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
       }}>
