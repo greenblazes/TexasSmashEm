@@ -3,7 +3,7 @@
  * Every game state and design component rendered with mock data.
  * No server connection required.
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ChipIcon from "../components/ChipIcon.jsx";
 import TrumpIcon from "../components/TrumpIcon.jsx";
 import { Link } from "react-router-dom";
@@ -94,6 +94,7 @@ const NAV = [
   ["#cards",           "Cards"],
   ["#buttons",         "Buttons"],
   ["#pills",           "Pills & Badges"],
+  ["#reward-popup",    "Reward Popup"],
   ["#stats",           "Stat Tiles"],
   ["#vs-banner",       "VS Banner"],
   ["#lobby-code",      "Lobby Code"],
@@ -151,6 +152,7 @@ export default function TestBed() {
         <CardsSection />
         <ButtonsSection />
         <PillsSection />
+        <RewardPopupSection />
         <StatsSection />
         <VSBannerSection />
         <LobbyCodeSection />
@@ -243,6 +245,10 @@ function PillsSection() {
           <ChipIcon size={22} className="chip-icon" />
           <span className="chip-value">850</span>
         </span>
+        <span className="points-pill">
+          <span className="points-pill-icon">★</span>
+          <span className="points-pill-value">120</span>
+        </span>
         <span className="trump-pill"><TrumpIcon size={18} /> Trump Card</span>
         <span className="notif">ℹ Info notification</span>
         <span className="notif notif-warn">⚠ Warning notification</span>
@@ -256,6 +262,63 @@ function PillsSection() {
           <span className="live-dot" /> Live indicator
         </span>
       </Row>
+    </Section>
+  );
+}
+
+function DemoRewardPopup({ reward, index, onDone }) {
+  const [vars, setVars] = useState(null);
+
+  useEffect(() => {
+    const originX = window.innerWidth / 2;
+    const originY = window.innerHeight / 2 + index * 74;
+    const target = document.querySelector(reward.kind === "chips" ? ".chip-pill" : ".points-pill");
+    let dx = 0, dy = -window.innerHeight * 0.35;
+    if (target) {
+      const r = target.getBoundingClientRect();
+      dx = r.left + r.width / 2 - originX;
+      dy = r.top + r.height / 2 - originY;
+    }
+    setVars({ top: originY, left: originX, "--dx": `${dx}px`, "--dy": `${dy}px` });
+  }, [reward.kind, index]);
+
+  if (!vars) return null;
+
+  return (
+    <div className={`reward-popup reward-popup-${reward.kind}`} style={vars} onAnimationEnd={onDone}>
+      <span className="reward-popup-amount">+{reward.amount}</span>
+      <span className="reward-popup-label">{reward.kind === "chips" ? "Chips" : "Points"}</span>
+    </div>
+  );
+}
+
+function RewardPopupSection() {
+  const [demoRewards, setDemoRewards] = useState([]);
+
+  function fire(kind) {
+    const amount = kind === "chips" ? 75 : 40;
+    setDemoRewards((r) => [...r, { id: Date.now() + Math.random(), kind, amount }]);
+  }
+
+  return (
+    <Section id="reward-popup" label="Reward Popup (chips / points gained)">
+      <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", marginBottom: 16 }}>
+        Fires automatically in production whenever a player's chips or points increase — Cow Feed,
+        Stock Bet payouts, Divvy Up, or the end-of-tournament bonuses. Pops up center-screen, holds,
+        then flies into the matching pill above (scroll up to watch it land).
+      </p>
+      <Row gap={10}>
+        <button className="btn-gold" onClick={() => fire("chips")}>Simulate +75 Chips</button>
+        <button className="btn-blue" onClick={() => fire("points")}>Simulate +40 Points</button>
+      </Row>
+      {demoRewards.map((r, i) => (
+        <DemoRewardPopup
+          key={r.id}
+          reward={r}
+          index={i}
+          onDone={() => setDemoRewards((rs) => rs.filter((x) => x.id !== r.id))}
+        />
+      ))}
     </Section>
   );
 }

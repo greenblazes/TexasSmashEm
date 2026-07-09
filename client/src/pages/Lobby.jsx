@@ -5,6 +5,7 @@ import { emitAck } from "../lib/socket.js";
 import Bracket from "./Bracket.jsx";
 import ChipIcon from "../components/ChipIcon.jsx";
 import RoundActions from "./RoundActions.jsx";
+import RewardPopups from "../components/RewardPopups.jsx";
 
 function TexasTPickSelector({ lobby, me, playerId }) {
   if (!me) return null;
@@ -65,6 +66,7 @@ export default function Lobby() {
 
   return (
     <div className="page">
+      <RewardPopups />
       <div className="page-header">
         <div>
           <span className="wordmark">Texas SMASH'em</span>
@@ -77,6 +79,12 @@ export default function Lobby() {
             <div className="chip-pill">
               <ChipIcon size={22} className="chip-icon" />
               <span className="chip-value">{me.chips ?? 0}</span>
+            </div>
+          )}
+          {me && (
+            <div className="points-pill">
+              <span className="points-pill-icon">★</span>
+              <span className="points-pill-value">{me.points ?? 0}</span>
             </div>
           )}
           {isHost && <Link to={`/lobby/${lobby.code}/admin`}>Host Admin</Link>}

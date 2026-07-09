@@ -665,7 +665,6 @@ function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run
 
 function PreBetComplete({ lobby, match, preBet, me, playerId, isParticipant, run }) {
   const handicap = matchHandicap(lobby, match);
-  const existingPrediction = me.matchPredictions?.[match.id];
 
   return (
     <div className="card card-red">
@@ -697,26 +696,6 @@ function PreBetComplete({ lobby, match, preBet, me, playerId, isParticipant, run
         <p style={{ fontSize: "0.82rem", color: "var(--red)", marginBottom: 10 }}>
           ⚠ {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% damage handicap
         </p>
-      )}
-
-      {!isParticipant && (
-        <div className="field">
-          <span className="field-label">Match Prediction</span>
-          <div className="prediction-toggle">
-            <button
-              className={`prediction-btn${existingPrediction === match.playerA ? " selected-a" : ""}`}
-              onClick={() => run("player:setMatchPrediction", { matchId: match.id, predictedWinnerId: match.playerA })}
-            >
-              {match.playerAName}
-            </button>
-            <button
-              className={`prediction-btn${existingPrediction === match.playerB ? " selected-b" : ""}`}
-              onClick={() => run("player:setMatchPrediction", { matchId: match.id, predictedWinnerId: match.playerB })}
-            >
-              {match.playerBName}
-            </button>
-          </div>
-        </div>
       )}
 
       <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", marginTop: 10 }}>

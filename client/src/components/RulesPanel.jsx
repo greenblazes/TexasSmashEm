@@ -61,7 +61,7 @@ const SECTIONS = [
       },
       {
         title: "Match Winner Prediction",
-        body: "Spectators (players not in the current match) can predict who will win each match. Correct predictions earn points via Cow Feed.",
+        body: "Spectators (players not in the current match) can predict who will win each match. Predictions can only be made during your own turn in the pre-match betting popup — not before spectator turns begin, and not after they end. Correct predictions earn points via Cow Feed.",
       },
       {
         title: "Stock Bets",
