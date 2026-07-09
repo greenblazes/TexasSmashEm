@@ -311,10 +311,10 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("player:buyBoons", ({ code, playerId }, ack) => {
+  socket.on("player:buyBoons", ({ code, playerId, quantity }, ack) => {
     try {
       const lobby = getLobby(code);
-      buyBoons(lobby, playerId);
+      buyBoons(lobby, playerId, quantity ?? 1);
       ack?.({ ok: true });
       broadcastLobby(code);
     } catch (err) {

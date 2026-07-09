@@ -100,7 +100,7 @@ export function createMockDispatcher({ getLobby, onChange }) {
           break;
         }
         case "player:buyBoons": {
-          engine.buyBoons(lobby, playerId);
+          engine.buyBoons(lobby, playerId, payload.quantity ?? 1);
           result = { ok: true };
           break;
         }

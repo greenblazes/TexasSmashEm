@@ -1,9 +1,13 @@
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLobby } from "../lib/LobbyContext.jsx";
 import { emitAck } from "../lib/socket.js";
-import Bracket from "./Bracket.jsx";
+import BracketPanel from "../components/BracketPanel.jsx";
 import ChipIcon from "../components/ChipIcon.jsx";
+import BoonIcon from "../components/BoonIcon.jsx";
+import PotIcon from "../components/PotIcon.jsx";
+import BoonDrawer from "../components/BoonDrawer.jsx";
+import TPickIcon from "../components/TPickIcon.jsx";
 import RoundActions from "./RoundActions.jsx";
 import RewardPopups from "../components/RewardPopups.jsx";
 import Scoreboard from "./Scoreboard.jsx";
@@ -17,8 +21,9 @@ function TexasTPickSelector({ lobby, me, playerId }) {
   }
 
   return (
-    <div className="card card-blue" style={{ marginTop: 14 }}>
+    <div className="card card-blue" style={{ marginTop: 14, textAlign: "center" }}>
       <span className="section-label">Texas T-Pick</span>
+      <TPickIcon size={56} style={{ marginBottom: 10 }} />
       <p style={{ marginBottom: 10 }}>Who will win the whole tournament? Locks in when play begins.</p>
       <select value={me.texasTPick || ""} onChange={(e) => pick(e.target.value)}>
         <option value="" disabled>Choose your pick</option>
@@ -39,6 +44,7 @@ export default function Lobby() {
   const { code } = useParams();
   const { lobby, me, playerId, isHost, leaveSession, rejoinAttempted, error } = useLobby();
   const navigate = useNavigate();
+  const [boonDrawerOpen, setBoonDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (rejoinAttempted && !lobby) navigate("/", { replace: true });
@@ -62,29 +68,58 @@ export default function Lobby() {
     navigate("/");
   }
 
+  async function handleBuyBoon() {
+    const res = await emitAck("player:buyBoons", { code: lobby.code, playerId, quantity: 1 });
+    return res;
+  }
+
   const totalPlayers = lobby.players.length;
   const picksDone = lobby.players.filter(p => p.texasTPick).length;
 
   return (
     <div className="page">
       <RewardPopups />
+      {lobby.bracket && <BracketPanel bracket={lobby.bracket} highlightPlayerId={playerId} />}
       <div className="page-header">
-        <div>
-          <span className="wordmark">Texas SMASH'em</span>
-          <span className="page-subtitle">
-            Lobby {lobby.code} · {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
-          </span>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+          <div>
+            <span className="wordmark">Texas SMASH'em</span>
+            <span className="page-subtitle">
+              Lobby {lobby.code} · {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
+            </span>
+          </div>
+          <div className="page-header-right">
+            {me && (
+              <div className="chip-pill">
+                <ChipIcon size={22} className="chip-icon" />
+                <span className="chip-value">{me.chips ?? 0}</span>
+              </div>
+            )}
+            {me && lobby.status !== "waiting" && (
+              <div
+                className="chip-pill boon-pill"
+                role="button"
+                tabIndex={0}
+                onClick={() => setBoonDrawerOpen((o) => !o)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setBoonDrawerOpen((o) => !o); }}
+                style={{ cursor: "pointer" }}
+              >
+                <BoonIcon size={22} className="chip-icon" />
+                <span className="chip-value">{me.boons ?? 0}</span>
+              </div>
+            )}
+            {isHost && <Link to={`/lobby/${lobby.code}/admin`}>Host Admin</Link>}
+            <button className="btn-ghost" onClick={handleLeave}>Exit</button>
+          </div>
         </div>
-        <div className="page-header-right">
-          {me && (
-            <div className="chip-pill">
-              <ChipIcon size={22} className="chip-icon" />
-              <span className="chip-value">{me.chips ?? 0}</span>
-            </div>
-          )}
-          {isHost && <Link to={`/lobby/${lobby.code}/admin`}>Host Admin</Link>}
-          <button className="btn-ghost" onClick={handleLeave}>Leave</button>
-        </div>
+        {me && lobby.status !== "waiting" && (
+          <BoonDrawer
+            open={boonDrawerOpen}
+            cost={Math.round(lobby.settings.buyBoonsCost / lobby.settings.buyBoonsAmount)}
+            chips={me.chips ?? 0}
+            onBuy={handleBuyBoon}
+          />
+        )}
       </div>
 
       {lobby.status === "waiting" && (
@@ -156,19 +191,15 @@ export default function Lobby() {
           {lobby.status === "complete" && lobby.divvied ? (
             <Scoreboard lobby={lobby} />
           ) : (
-            <>
-              <div className="card card-gold">
-                <div className="pot-display">
-                  <span className="pot-label">Tournament Pot</span>
+            <div className="card card-gold">
+              <div className="pot-display">
+                <span className="pot-label">Tournament Pot</span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 12 }}>
+                  <PotIcon size={72} />
                   <div className="pot-amount">{lobby.pot.toLocaleString()}</div>
                 </div>
               </div>
-
-              <div className="card">
-                <span className="section-label">Bracket</span>
-                <Bracket bracket={lobby.bracket} highlightPlayerId={playerId} />
-              </div>
-            </>
+            </div>
           )}
 
           {lobby.status === "in_progress" && (
