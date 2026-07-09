@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useLobby } from "../lib/LobbyContext.jsx";
 import { emitAck } from "../lib/socket.js";
 import Bracket from "./Bracket.jsx";
+import TrumpIcon from "../components/TrumpIcon.jsx";
 
 export default function Admin() {
   const { code } = useParams();
@@ -132,7 +133,7 @@ export default function Admin() {
                   <td style={{ fontVariantNumeric: "tabular-nums" }}>{p.chips}</td>
                   <td style={{ color: "var(--blue-light)" }}>{p.boons}</td>
                   <td>{lobby.players.find((x) => x.id === p.texasTPick)?.name || "—"}</td>
-                  <td>{p.hasTrumpCard ? "🃏" : ""}</td>
+                  <td>{p.hasTrumpCard ? <TrumpIcon size={22} /> : ""}</td>
                   <td>{p.eliminated ? "Yes" : "No"}</td>
                   <td>
                     <button onClick={() => adjustPoints(p.id, 1)}>+1</button>

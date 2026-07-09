@@ -271,6 +271,7 @@ select {
 
 .chip-icon {
   flex-shrink: 0;
+  object-fit: contain;
   filter: drop-shadow(0 0 5px rgba(212,168,50,0.5));
   animation: chip-spin 9s linear infinite;
 }
@@ -543,7 +544,7 @@ select {
   min-height: 14px; align-items: center;
 }
 
-.modal-player-boons .boon-pip { width: 10px; height: 10px; margin-right: 0; }
+.modal-player-boons .boon-pip { width: 13px; height: 15px; margin-right: 0; }
 .modal-player-boons .boon-count {
   font-size: 0.72rem; color: var(--text-dim);
 }
@@ -657,9 +658,13 @@ select {
    BOON PIPS
 ═══════════════════════════════════ */
 .boon-pip {
-  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--blue-light); box-shadow: 0 0 5px var(--blue); margin-right: 2px;
+  display: inline-block; width: 12px; height: 14px; margin-right: 2px;
+  vertical-align: middle;
+  background: url('./assets/icons/boon.png') center / contain no-repeat;
+  filter: drop-shadow(0 0 3px rgba(212,168,50,0.55));
 }
+/* Boons staged this turn but not yet committed — shown tentative. */
+.boon-pip.pending { opacity: 0.5; }
 
 /* ═══════════════════════════════════
    NOTIFICATION STRIP
