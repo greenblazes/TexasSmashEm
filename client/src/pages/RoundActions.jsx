@@ -335,11 +335,14 @@ function AwaitingNextRound({ match, me }) {
 function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, run, autoOpenModal = true }) {
   const [pendingSelf, setPendingSelf] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const mySubmitted = playerId in preBet.sealedBoons;
+  // preBet.sealedBoons is the sanitized (server-broadcast or mock-sanitized) view:
+  // {participantId: boolean} — the raw submitted amount is intentionally hidden
+  // from the client until both participants have sealed.
+  const mySubmitted = preBet.sealedBoons[playerId] === true;
   const isMyTurn = isParticipant && !mySubmitted;
   const modalOpen = autoOpenModal ? isMyTurn : previewOpen;
   const otherParticipantId = preBet.participants.find((id) => id !== playerId);
-  const otherSubmitted = otherParticipantId in preBet.sealedBoons;
+  const otherSubmitted = preBet.sealedBoons[otherParticipantId] === true;
 
   useEffect(() => {
     if (autoOpenModal && isMyTurn) { playBeep(); vibrate(); }
@@ -372,7 +375,7 @@ function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, r
 
         <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
           {preBet.participants.map((id) => {
-            const submitted = id in preBet.sealedBoons;
+            const submitted = preBet.sealedBoons[id] === true;
             return (
               <div key={id} style={{
                 flex: 1, padding: "8px 12px", borderRadius: "var(--r)",

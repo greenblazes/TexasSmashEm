@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 import { createMockLobby } from "../lib/mockEngine/mockLobbyFactory.js";
 import { createMockDispatcher } from "../lib/mockEngine/mockDispatcher.js";
 import { setEmitAckOverride, clearEmitAckOverride, emitAck } from "../lib/socket.js";
-import { setTexasTPick } from "../lib/mockEngine/gameEngine.js";
+import { setTexasTPick, sanitizeLobby } from "../lib/mockEngine/gameEngine.js";
 import ChipIcon from "../components/ChipIcon.jsx";
 import BoonIcon from "../components/BoonIcon.jsx";
 import PotIcon from "../components/PotIcon.jsx";
@@ -124,7 +124,7 @@ export default function TestTournament() {
     setTick((t) => t + 1);
   }
 
-  const lobby = lobbyRef.current;
+  const lobby = sanitizeLobby(lobbyRef.current);
   const me = lobby.players.find((p) => p.id === viewAsId) || lobby.players[0];
   const hostId = lobby.hostPlayerId;
 
