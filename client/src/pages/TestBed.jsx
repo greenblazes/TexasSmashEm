@@ -5,6 +5,7 @@
  */
 import React, { useState } from "react";
 import ChipIcon from "../components/ChipIcon.jsx";
+import TrumpIcon from "../components/TrumpIcon.jsx";
 import { Link } from "react-router-dom";
 import RoundActions from "./RoundActions.jsx";
 import Bracket from "./Bracket.jsx";
@@ -242,7 +243,7 @@ function PillsSection() {
           <ChipIcon size={22} className="chip-icon" />
           <span className="chip-value">850</span>
         </span>
-        <span className="trump-pill">🃏 Trump Card</span>
+        <span className="trump-pill"><TrumpIcon size={18} /> Trump Card</span>
         <span className="notif">ℹ Info notification</span>
         <span className="notif notif-warn">⚠ Warning notification</span>
       </Row>

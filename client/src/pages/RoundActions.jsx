@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { emitAck } from "../lib/socket.js";
 import { matchHandicap } from "../lib/economy.js";
+import TrumpIcon from "../components/TrumpIcon.jsx";
+import stockBetImg from "../assets/icons/stockbet.png";
 
 function playerName(lobby, id) {
   return lobby.players.find((p) => p.id === id)?.name || "—";
@@ -88,8 +90,7 @@ function ModalVsRow({ match, lobby, pendingA = 0, pendingB = 0 }) {
               ? Array.from({ length: Math.min(totalA, 12) }).map((_, i) => (
                   <span
                     key={i}
-                    className="boon-pip"
-                    style={i >= handicap.aBoons ? { background: "var(--gold)", boxShadow: "0 0 5px var(--gold)" } : undefined}
+                    className={`boon-pip${i >= handicap.aBoons ? " pending" : ""}`}
                   />
                 ))
               : <span className="boon-count">none</span>}
@@ -110,8 +111,7 @@ function ModalVsRow({ match, lobby, pendingA = 0, pendingB = 0 }) {
               ? Array.from({ length: Math.min(totalB, 12) }).map((_, i) => (
                   <span
                     key={i}
-                    className="boon-pip"
-                    style={i >= handicap.bBoons ? { background: "var(--gold)", boxShadow: "0 0 5px var(--gold)" } : undefined}
+                    className={`boon-pip${i >= handicap.bBoons ? " pending" : ""}`}
                   />
                 ))
               : <span className="boon-count">none</span>}
@@ -567,9 +567,12 @@ function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run
         {canBetStocks && prediction && (
           <div className="modal-section">
             <SectionLabel>Stock Bet</SectionLabel>
-            <p style={{ fontSize: "0.76rem", color: "var(--text-mid)", margin: "0 0 10px" }}>
-              How many stocks will <strong style={{ color: "var(--text)" }}>{playerName(lobby, prediction)}</strong> have left if they win?
-            </p>
+            <img
+              src={stockBetImg}
+              alt="Stock Bet"
+              style={{ display: "block", width: "60%", maxWidth: 220, height: "auto", margin: "0 auto 10px", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.5))" }}
+              draggable={false}
+            />
             <div className="stock-bet-toggle">
               {lobby.settings.stockPool.map((s) => {
                 const taken = stockBets.some((b) => b.stocks === s.stocks);
@@ -733,7 +736,7 @@ function TrumpCardButton({ match, me, playerId, run }) {
   if (isParticipant) return null;
   return (
     <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border-gold)" }}>
-      <span className="field-label" style={{ display: "block", marginBottom: 8 }}>🃏 Play Trump Card — clear all boons on:</span>
+      <span className="field-label" style={{ display: "block", marginBottom: 8 }}><TrumpIcon size={16} style={{ marginRight: 6 }} />Play Trump Card — clear all boons on:</span>
       <div style={{ display: "flex", gap: 8 }}>
         <button className="btn-gold" onClick={() => run("player:playTrumpCard", { matchId: match.id, targetParticipantId: match.playerA })}>{match.playerAName}</button>
         <button className="btn-gold" onClick={() => run("player:playTrumpCard", { matchId: match.id, targetParticipantId: match.playerB })}>{match.playerBName}</button>
