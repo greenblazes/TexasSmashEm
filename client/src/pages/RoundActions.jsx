@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { emitAck } from "../lib/socket.js";
-import { matchHandicap } from "../lib/economy.js";
+import { matchHandicap, boonHandicapPercent } from "../lib/economy.js";
 import TrumpIcon from "../components/TrumpIcon.jsx";
 import TPickIcon from "../components/TPickIcon.jsx";
 import stockBetImg from "../assets/icons/stockbet.png";
@@ -88,12 +88,44 @@ function BoonStepper({ label, value, onDec, onInc, canDec, canInc }) {
   );
 }
 
+// ── Prominent handicap badge — big % with the affected player's name ────────
+
+function HandicapBadge({ percent, name, delta }) {
+  if (percent <= 0) return null;
+  return (
+    <div style={{
+      display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8,
+      textAlign: "center", padding: "10px 14px",
+      background: "var(--red-dim)", border: "1px solid var(--border-red)", borderRadius: "var(--r)",
+    }}>
+      <span style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--red)", lineHeight: 1 }}>
+        +{percent}%
+      </span>
+      <span style={{ fontSize: "0.78rem", color: "var(--text)" }}>
+        damage handicap on <strong>{name}</strong>
+      </span>
+      {delta != null && delta !== percent && (
+        <span style={{ fontSize: "0.68rem", color: "var(--gold)" }}>(was {delta}%)</span>
+      )}
+    </div>
+  );
+}
+
 // ── VS header with live boon counts ─────────────────────────────────────────
 
 function ModalVsRow({ match, lobby, pendingA = 0, pendingB = 0 }) {
   const handicap = matchHandicap(lobby, match);
   const totalA = handicap.aBoons + pendingA;
   const totalB = handicap.bBoons + pendingB;
+
+  // Live preview of the handicap including boons the player is currently
+  // choosing to place but hasn't submitted yet — mirrors the "pending" boon
+  // pips above so the % updates in real time as they adjust the steppers.
+  const previewDiff = Math.abs(totalA - totalB);
+  const previewPercent = boonHandicapPercent(previewDiff);
+  const previewHandicappedId =
+    totalA === totalB ? null : totalA < totalB ? match.playerA : match.playerB;
+  const hasPending = pendingA > 0 || pendingB > 0;
 
   return (
     <>
@@ -139,11 +171,13 @@ function ModalVsRow({ match, lobby, pendingA = 0, pendingB = 0 }) {
         </div>
       </div>
 
-      {handicap.percent > 0 && (
-        <div style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--red)", marginBottom: 14 }}>
-          ⚠ {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% damage handicap
-        </div>
-      )}
+      <div style={{ marginBottom: previewPercent > 0 ? 14 : 0 }}>
+        <HandicapBadge
+          percent={previewPercent}
+          name={lobby.players.find((p) => p.id === previewHandicappedId)?.name}
+          delta={hasPending ? handicap.percent : null}
+        />
+      </div>
     </>
   );
 }
@@ -239,12 +273,9 @@ function MatchLocked({ match, lobby, isParticipant, me, playerId }) {
         <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
       </div>
       {handicap.percent > 0 && (
-        <p style={{ marginTop: 10, color: "var(--text-mid)", fontSize: "0.85rem" }}>
-          Handicap:{" "}
-          <span style={{ color: "var(--red)" }}>
-            {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% dmg
-          </span>
-        </p>
+        <div style={{ marginTop: 10 }}>
+          <HandicapBadge percent={handicap.percent} name={lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} />
+        </div>
       )}
       <MyStakeSummary lobby={lobby} match={match} me={me} playerId={playerId} />
       <p style={{ marginTop: 10, fontSize: "0.8rem", color: "var(--text-dim)" }}>
@@ -782,9 +813,9 @@ function PreBetComplete({ lobby, match, preBet, me, playerId, isParticipant, run
       </div>
 
       {handicap.percent > 0 && (
-        <p style={{ fontSize: "0.82rem", color: "var(--red)", marginBottom: 10 }}>
-          ⚠ {lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} +{handicap.percent}% damage handicap
-        </p>
+        <div style={{ marginBottom: 10 }}>
+          <HandicapBadge percent={handicap.percent} name={lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} />
+        </div>
       )}
 
       <MyStakeSummary lobby={lobby} match={match} me={me} playerId={playerId} />
