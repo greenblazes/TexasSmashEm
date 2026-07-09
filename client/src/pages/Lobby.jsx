@@ -1,8 +1,9 @@
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { useLobby } from "../lib/LobbyContext.jsx";
 import { emitAck } from "../lib/socket.js";
 import BracketPanel from "../components/BracketPanel.jsx";
+import AdminPanel from "../components/AdminPanel.jsx";
 import ChipIcon from "../components/ChipIcon.jsx";
 import BoonIcon from "../components/BoonIcon.jsx";
 import PotIcon from "../components/PotIcon.jsx";
@@ -10,6 +11,8 @@ import BoonDrawer from "../components/BoonDrawer.jsx";
 import TPickIcon from "../components/TPickIcon.jsx";
 import QRCode from "../components/QRCode.jsx";
 import JoinLobbyModal from "../components/JoinLobbyModal.jsx";
+import ExitIcon from "../components/ExitIcon.jsx";
+import ExitConfirmModal from "../components/ExitConfirmModal.jsx";
 import RoundActions from "./RoundActions.jsx";
 import RewardPopups from "../components/RewardPopups.jsx";
 import Scoreboard from "./Scoreboard.jsx";
@@ -47,6 +50,7 @@ export default function Lobby() {
   const { lobby, me, playerId, isHost, leaveSession, joinLobby, rejoinAttempted, error } = useLobby();
   const navigate = useNavigate();
   const [boonDrawerOpen, setBoonDrawerOpen] = useState(false);
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
 
   async function handleJoinAsNewPlayer(name) {
     return joinLobby(code, name);
@@ -90,13 +94,17 @@ export default function Lobby() {
     <div className="page">
       <RewardPopups />
       {lobby.bracket && <BracketPanel bracket={lobby.bracket} highlightPlayerId={playerId} />}
+      {isHost && <AdminPanel lobby={lobby} playerId={playerId} />}
       <div className="page-header">
+        <div style={{ textAlign: "center" }}>
+          <span className="wordmark game-title"><ChipIcon size={22} /> Texas SMASH'em <ChipIcon size={22} /></span>
+        </div>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
-            <span className="wordmark">Texas SMASH'em</span>
             <span className="page-subtitle">
-              Lobby {lobby.code} · {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
+              Lobby {lobby.code}
             </span>
+
           </div>
           <div className="page-header-right">
             {me && (
@@ -118,8 +126,15 @@ export default function Lobby() {
                 <span className="chip-value">{me.boons ?? 0}</span>
               </div>
             )}
-            {isHost && <Link to={`/lobby/${lobby.code}/admin`}>Host Admin</Link>}
-            <button className="btn-ghost" onClick={handleLeave}>Exit</button>
+            <button
+              className="btn-ghost"
+              onClick={() => setExitConfirmOpen(true)}
+              aria-label="Exit tournament"
+              title="Exit tournament"
+              style={{ padding: 8, borderRadius: "50%", width: 34, height: 34 }}
+            >
+              <ExitIcon size={16} />
+            </button>
           </div>
         </div>
         {me && lobby.status !== "waiting" && (
@@ -131,7 +146,12 @@ export default function Lobby() {
           />
         )}
       </div>
-
+      
+      <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <span className={`lobby-status lobby-status-${lobby.status}`}>
+                {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
+              </span>
+            </div>
       {lobby.status === "waiting" && (
         <div className="cols-2">
           <div>
@@ -230,6 +250,12 @@ export default function Lobby() {
           )}
         </div>
       )}
+
+      <ExitConfirmModal
+        open={exitConfirmOpen}
+        onCancel={() => setExitConfirmOpen(false)}
+        onConfirm={handleLeave}
+      />
     </div>
   );
 }

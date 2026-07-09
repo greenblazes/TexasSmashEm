@@ -243,7 +243,7 @@ select {
 ═══════════════════════════════════ */
 .page-header {
   display: flex; flex-direction: column;
-  padding: 16px 20px 22px; margin: -24px -20px 24px; border-bottom: 1px solid var(--border);
+  padding: 10px 20px; margin: -46px -20px 24px; border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 500;
   background: rgba(7,5,15,0.92); backdrop-filter: blur(8px);
 }
@@ -256,6 +256,13 @@ select {
   background: linear-gradient(135deg, #D4A832, #F0C84A);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   margin-bottom: 3px;
+}
+
+.game-title {
+  display: flex; align-items: center; gap: 8px;
+  justify-content: center;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 10px rgba(212,168,50,0.7));
 }
 
 .page-subtitle {
@@ -360,6 +367,168 @@ select {
   background: linear-gradient(160deg, #D4A832 0%, #F5CE60 45%, #D4A832 70%, #B8891E 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   filter: drop-shadow(0 0 16px rgba(212,168,50,0.5));
+}
+
+/* ═══════════════════════════════════
+   SIDE PANELS (Bracket / Rules)
+═══════════════════════════════════ */
+.side-panel {
+  --side-panel-width: min(340px, 100vw);
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: var(--side-panel-width);
+  max-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.side-panel-left {
+  left: 0;
+  border-right: 1px solid var(--border-gold);
+  transform: translateX(-100%);
+}
+.side-panel-left.is-open {
+  transform: translateX(0);
+  box-shadow: 8px 0 40px rgba(0,0,0,0.6);
+}
+
+.side-panel-right {
+  right: 0;
+  border-left: 1px solid var(--border-gold);
+  transform: translateX(100%);
+}
+.side-panel-right.is-open {
+  transform: translateX(0);
+  box-shadow: -8px 0 40px rgba(0,0,0,0.6);
+}
+
+.side-panel-z-inactive { z-index: 999; }
+.side-panel-z-active { z-index: 1001; }
+
+.side-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(2px);
+}
+.side-panel-backdrop-z-inactive { z-index: 998; }
+.side-panel-backdrop-z-active { z-index: 1000; }
+
+.side-panel-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, rgba(212,168,50,0.07), transparent);
+  flex-shrink: 0;
+}
+
+.side-panel-title {
+  font-family: var(--font-d);
+  font-size: 1.1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #D4A832, #F0C84A);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.side-panel-subtitle {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.side-panel-body {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.side-panel-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.side-panel-tab {
+  --side-panel-width: min(340px, 100vw);
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 10px 6px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(180deg, #D4A832, #9E7A1E);
+  color: #07050F;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  transition: left 0.28s cubic-bezier(0.4,0,0.2,1), right 0.28s cubic-bezier(0.4,0,0.2,1), filter 0.12s ease;
+}
+
+.side-panel-tab:hover:not(:disabled) {
+  transform: translateY(-50%);
+  filter: brightness(1.1);
+}
+
+.side-panel-tab-left {
+  left: 0;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 4px 0 18px rgba(212,168,50,0.35);
+}
+.side-panel-tab-left.is-open {
+  left: var(--side-panel-width);
+}
+
+.side-panel-tab-right {
+  right: 0;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -4px 0 18px rgba(212,168,50,0.35);
+}
+.side-panel-tab-right.is-open {
+  right: var(--side-panel-width);
+}
+
+.side-panel-tab-z-inactive { z-index: 1000; }
+.side-panel-tab-z-active { z-index: 1002; }
+
+/* Admin tab stacks just above the Rules tab (both docked on the right) and
+   uses the blue palette instead of gold to set it apart as a host-only tool. */
+.side-panel-tab-admin {
+  top: 50%;
+  transform: translateY(calc(-150% - 8px));
+  background: linear-gradient(180deg, #2D7DD2, #1B5A9E);
+  color: #fff;
+  box-shadow: -4px 0 18px rgba(45,125,210,0.35);
+}
+.side-panel-tab-admin:hover:not(:disabled) {
+  transform: translateY(calc(-150% - 8px));
+  filter: brightness(1.15);
+}
+
+.side-panel-blue { border-left-color: var(--border-blue); }
+.side-panel-blue.is-open { box-shadow: -8px 0 40px rgba(0,0,0,0.6); }
+
+.side-panel-header-blue {
+  background: linear-gradient(90deg, rgba(45,125,210,0.1), transparent);
+}
+
+.side-panel-title-blue {
+  background: linear-gradient(135deg, #5BA4F5, #2D7DD2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ═══════════════════════════════════
