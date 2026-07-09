@@ -81,12 +81,6 @@ export default function Lobby() {
               <span className="chip-value">{me.chips ?? 0}</span>
             </div>
           )}
-          {me && (
-            <div className="points-pill">
-              <span className="points-pill-icon">★</span>
-              <span className="points-pill-value">{me.points ?? 0}</span>
-            </div>
-          )}
           {isHost && <Link to={`/lobby/${lobby.code}/admin`}>Host Admin</Link>}
           <button className="btn-ghost" onClick={handleLeave}>Leave</button>
         </div>

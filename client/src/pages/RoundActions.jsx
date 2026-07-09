@@ -153,7 +153,7 @@ function SectionLabel({ children }) {
 
 // ── Main export ──────────────────────────────────────────────────────────────
 
-export default function RoundActions({ lobby, me, playerId }) {
+export default function RoundActions({ lobby, me, playerId, autoOpenModal = true }) {
   const [error, setError] = useState("");
 
   if (!lobby.bracket || !me) return null;
@@ -180,10 +180,6 @@ export default function RoundActions({ lobby, me, playerId }) {
         <div className="stat-tile">
           <div className="stat-value" style={{ color: "var(--blue-light)" }}>{me.boons}</div>
           <div className="stat-label">Boons</div>
-        </div>
-        <div className="stat-tile">
-          <div className="stat-value" style={{ color: "var(--green)" }}>{me.points}</div>
-          <div className="stat-label">Points</div>
         </div>
       </div>
 
@@ -218,6 +214,7 @@ export default function RoundActions({ lobby, me, playerId }) {
             playerId={playerId}
             isParticipant={isParticipant}
             run={run}
+            autoOpenModal={autoOpenModal}
           />
         );
       })}
@@ -259,33 +256,40 @@ function MatchLocked({ match, lobby, isParticipant }) {
 
 // ── Pre-bet phase router ──────────────────────────────────────────────────────
 
-function MatchPreBet({ lobby, match, preBet, me, playerId, isParticipant, run }) {
+function MatchPreBet({ lobby, match, preBet, me, playerId, isParticipant, run, autoOpenModal }) {
   const phase = preBet?.phase ?? "complete";
   if (phase === "participants") {
-    return <ParticipantPhase lobby={lobby} match={match} preBet={preBet} me={me} playerId={playerId} isParticipant={isParticipant} run={run} />;
+    return <ParticipantPhase lobby={lobby} match={match} preBet={preBet} me={me} playerId={playerId} isParticipant={isParticipant} run={run} autoOpenModal={autoOpenModal} />;
   }
   if (phase === "spectators") {
-    return <SpectatorPhase lobby={lobby} match={match} preBet={preBet} me={me} playerId={playerId} isParticipant={isParticipant} run={run} />;
+    return <SpectatorPhase lobby={lobby} match={match} preBet={preBet} me={me} playerId={playerId} isParticipant={isParticipant} run={run} autoOpenModal={autoOpenModal} />;
   }
   return <PreBetComplete lobby={lobby} match={match} preBet={preBet} me={me} playerId={playerId} isParticipant={isParticipant} run={run} />;
 }
 
 // ── Participant sealed boon phase ─────────────────────────────────────────────
 
-function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, run }) {
+function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, run, autoOpenModal = true }) {
   const [pendingSelf, setPendingSelf] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const mySubmitted = preBet.sealedBoons[playerId] === true;
   const isMyTurn = isParticipant && !mySubmitted;
+  const modalOpen = autoOpenModal ? isMyTurn : previewOpen;
   const otherParticipantId = preBet.participants.find((id) => id !== playerId);
   const otherSubmitted = preBet.sealedBoons[otherParticipantId] === true;
 
   useEffect(() => {
-    if (isMyTurn) { playBeep(); vibrate(); }
-  }, [isMyTurn]);
+    if (autoOpenModal && isMyTurn) { playBeep(); vibrate(); }
+  }, [autoOpenModal, isMyTurn]);
 
   const boonsAvailable = me.boons - pendingSelf;
 
   function handleSubmit() {
+    if (!autoOpenModal) {
+      // Preview mode (/style) isn't wired to a real match — just close the popup.
+      setPreviewOpen(false);
+      return;
+    }
     run("player:submitParticipantBoons", { matchId: match.id, amount: pendingSelf });
   }
 
@@ -335,11 +339,17 @@ function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, r
           </p>
         )}
 
+        {!autoOpenModal && isMyTurn && (
+          <button className="btn-ghost" style={{ marginTop: 12 }} onClick={() => setPreviewOpen((v) => !v)}>
+            {previewOpen ? "Hide Popup Preview" : "Preview Popup"}
+          </button>
+        )}
+
         <TrumpCardButton match={match} me={me} playerId={playerId} run={run} />
       </div>
 
-      {/* Modal — only when it's this participant's turn */}
-      <BettingModal open={isMyTurn} deadline={preBet.deadline} totalMs={preBet.turnDurationMs}>
+      {/* Modal — only when it's this participant's turn (or manually previewed) */}
+      <BettingModal open={modalOpen} deadline={preBet.deadline} totalMs={preBet.turnDurationMs}>
         <div style={{ marginBottom: 18 }}>
           <div style={{ textAlign: "center", fontSize: "0.72rem", letterSpacing: "0.14em", color: "var(--gold)", fontWeight: 700, textTransform: "uppercase", marginBottom: 14 }}>
             Seal Your Boons
@@ -385,7 +395,7 @@ function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, r
 
 // ── Spectator turn phase ──────────────────────────────────────────────────────
 
-function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run }) {
+function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run, autoOpenModal = true }) {
   const [boonsA, setBoonsA] = useState(0);
   const [boonsB, setBoonsB] = useState(0);
   const [prediction, setPrediction] = useState(me.matchPredictions?.[match.id] || "");
@@ -393,9 +403,11 @@ function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run
   const [betWager, setBetWager] = useState(10);
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const currentId = preBet.spectatorOrder[preBet.currentTurnIdx];
   const isMyTurn = playerId === currentId;
+  const modalOpen = autoOpenModal ? (isMyTurn && !isParticipant) : previewOpen;
   const totalPending = boonsA + boonsB;
   const boonsRemaining = me.boons - totalPending;
   const stockBets = lobby.stockBets?.[match.id] || [];
@@ -404,10 +416,15 @@ function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run
   const canRideDouble = me.eliminated && me.chips === 0;
 
   useEffect(() => {
-    if (isMyTurn) { playBeep(); vibrate(); }
-  }, [isMyTurn]);
+    if (autoOpenModal && isMyTurn) { playBeep(); vibrate(); }
+  }, [autoOpenModal, isMyTurn]);
 
   async function handleDone() {
+    if (!autoOpenModal) {
+      // Preview mode (/style) isn't wired to a real match — just close the popup.
+      setPreviewOpen(false);
+      return;
+    }
     if (submitting) return;
     setSubmitting(true);
     setModalError("");
@@ -508,11 +525,17 @@ function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run
           </p>
         )}
 
+        {!autoOpenModal && isMyTurn && !isParticipant && (
+          <button className="btn-ghost" style={{ marginTop: 12 }} onClick={() => setPreviewOpen((v) => !v)}>
+            {previewOpen ? "Hide Popup Preview" : "Preview Popup"}
+          </button>
+        )}
+
         <TrumpCardButton match={match} me={me} playerId={playerId} run={(e, p) => emitAck(e, { code: lobby.code, playerId, ...p })} />
       </div>
 
-      {/* Betting modal — only when it's this spectator's turn */}
-      <BettingModal open={isMyTurn && !isParticipant} deadline={preBet.deadline} totalMs={preBet.turnDurationMs}>
+      {/* Betting modal — only when it's this spectator's turn (or manually previewed) */}
+      <BettingModal open={modalOpen} deadline={preBet.deadline} totalMs={preBet.turnDurationMs}>
         <div style={{ marginBottom: 18 }}>
           <div style={{ textAlign: "center", fontSize: "0.72rem", letterSpacing: "0.14em", color: "var(--gold)", fontWeight: 700, textTransform: "uppercase", marginBottom: 14 }}>
             Your Turn to Bet

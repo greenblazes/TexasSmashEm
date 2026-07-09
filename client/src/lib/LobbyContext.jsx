@@ -12,7 +12,7 @@ export function LobbyProvider({ children }) {
   const [error, setError] = useState(null);
   const [rejoinAttempted, setRejoinAttempted] = useState(false);
   const [rewards, setRewards] = useState([]);
-  const prevStatsRef = useRef(null); // { id, chips, points }
+  const prevStatsRef = useRef(null); // { id, chips }
 
   useEffect(() => {
     function onState(newLobby) {
@@ -75,11 +75,11 @@ export function LobbyProvider({ children }) {
   const me = lobby?.players?.find((p) => p.id === playerId) || null;
   const isHost = !!me?.isHost;
 
-  // Whenever this player's chips or points go up, queue a reward popup for the
-  // gain. Diffing against the previous snapshot (rather than a server-pushed
-  // "you earned X" event) means it fires for every source of chips/points —
-  // Cow Feed, Stock Bets, Divvy Up, end-of-tournament bonuses — without the
-  // server needing to know about the animation.
+  // Whenever this player's chips go up, queue a reward popup for the gain.
+  // Diffing against the previous snapshot (rather than a server-pushed
+  // "you earned X" event) means it fires for every source of chips — Cow Feed,
+  // Stock Bets, Divvy Up, end-of-tournament bonuses — without the server
+  // needing to know about the animation.
   useEffect(() => {
     if (!me) {
       prevStatsRef.current = null;
@@ -88,16 +88,12 @@ export function LobbyProvider({ children }) {
     const prev = prevStatsRef.current;
     if (prev && prev.id === me.id) {
       const chipsGained = me.chips - prev.chips;
-      const pointsGained = me.points - prev.points;
       if (chipsGained > 0) {
         setRewards((r) => [...r, { id: ++rewardIdCounter, kind: "chips", amount: chipsGained }]);
       }
-      if (pointsGained > 0) {
-        setRewards((r) => [...r, { id: ++rewardIdCounter, kind: "points", amount: pointsGained }]);
-      }
     }
-    prevStatsRef.current = { id: me.id, chips: me.chips, points: me.points };
-  }, [me?.id, me?.chips, me?.points]);
+    prevStatsRef.current = { id: me.id, chips: me.chips };
+  }, [me?.id, me?.chips]);
 
   const dismissReward = useCallback((id) => {
     setRewards((r) => r.filter((x) => x.id !== id));

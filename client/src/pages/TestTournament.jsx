@@ -45,7 +45,7 @@ function findActiveMatch(bracket) {
 export default function TestTournament() {
   const lobbyRef = useRef(buildFreshLobby());
   const dispatcherRef = useRef(null);
-  const prevStatsRef = useRef({}); // playerId -> { chips, points }
+  const prevStatsRef = useRef({}); // playerId -> { chips }
   const viewAsIdRef = useRef(lobbyRef.current.hostPlayerId);
 
   const [, setTick] = useState(0);
@@ -63,15 +63,11 @@ export default function TestTournament() {
     const prev = prevStatsRef.current[me.id];
     if (prev) {
       const chipsGained = me.chips - prev.chips;
-      const pointsGained = me.points - prev.points;
       if (chipsGained > 0) {
         setRewards((r) => [...r, { id: ++rewardIdRef.current, kind: "chips", amount: chipsGained }]);
       }
-      if (pointsGained > 0) {
-        setRewards((r) => [...r, { id: ++rewardIdRef.current, kind: "points", amount: pointsGained }]);
-      }
     }
-    prevStatsRef.current[me.id] = { chips: me.chips, points: me.points };
+    prevStatsRef.current[me.id] = { chips: me.chips };
   }
 
   function handleChange(event, result) {
@@ -87,7 +83,7 @@ export default function TestTournament() {
     dispatcherRef.current = dispatcher;
     setEmitAckOverride(dispatcher.emitAck);
     // Seed the reward-diff baseline so mounting doesn't itself pop a "reward".
-    for (const p of lobbyRef.current.players) prevStatsRef.current[p.id] = { chips: p.chips, points: p.points };
+    for (const p of lobbyRef.current.players) prevStatsRef.current[p.id] = { chips: p.chips };
     return () => {
       dispatcher.dispose();
       clearEmitAckOverride();
@@ -99,7 +95,7 @@ export default function TestTournament() {
     dispatcherRef.current?.dispose();
     lobbyRef.current = buildFreshLobby();
     prevStatsRef.current = {};
-    for (const p of lobbyRef.current.players) prevStatsRef.current[p.id] = { chips: p.chips, points: p.points };
+    for (const p of lobbyRef.current.players) prevStatsRef.current[p.id] = { chips: p.chips };
     setRewards([]);
     setLog([]);
     setViewAsId(lobbyRef.current.hostPlayerId);
@@ -119,7 +115,7 @@ export default function TestTournament() {
   // an inflated popup, then re-render.
   function resyncAndRerender(playerId) {
     const p = lobbyRef.current.players.find((pl) => pl.id === playerId);
-    if (p) prevStatsRef.current[p.id] = { chips: p.chips, points: p.points };
+    if (p) prevStatsRef.current[p.id] = { chips: p.chips };
     setTick((t) => t + 1);
   }
 
@@ -147,10 +143,6 @@ export default function TestTournament() {
             <div className="chip-pill">
               <ChipIcon size={22} className="chip-icon" />
               <span className="chip-value">{me.chips ?? 0}</span>
-            </div>
-            <div className="points-pill">
-              <span className="points-pill-icon">★</span>
-              <span className="points-pill-value">{me.points ?? 0}</span>
             </div>
             <Link to="/">← Back to app</Link>
           </div>

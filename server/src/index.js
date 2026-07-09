@@ -391,13 +391,13 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("host:adjustPoints", ({ code, playerId, targetPlayerId, delta }, ack) => {
+  socket.on("host:adjustChips", ({ code, playerId, targetPlayerId, delta }, ack) => {
     try {
       const lobby = getLobby(code);
       requireHost(lobby, playerId);
       const target = lobby.players.find((p) => p.id === targetPlayerId);
       if (!target) throw new Error("Player not found");
-      target.points += Number(delta) || 0;
+      target.chips += Number(delta) || 0;
       ack?.({ ok: true });
       broadcastLobby(code);
     } catch (err) {

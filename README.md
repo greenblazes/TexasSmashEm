@@ -21,12 +21,12 @@ npm run dev
 ```
 Client runs on `http://localhost:5173`.
 
-Open the client URL in multiple browser tabs/devices to simulate multiple players. One player creates a lobby (host), shares the 5-character code, and up to 23 others join. Once everyone has joined, the host clicks "Start Tournament" to generate the single-elimination bracket, then uses the Host Admin page to report match winners and adjust points.
+Open the client URL in multiple browser tabs/devices to simulate multiple players. One player creates a lobby (host), shares the 5-character code, and up to 23 others join. Once everyone has joined, the host clicks "Start Tournament" to generate the single-elimination bracket, then uses the Host Admin page to report match winners and adjust chips.
 
 ## Architecture
 
 - `server/` — Node + Express + Socket.IO. In-memory lobby store (no database). Bracket generation/advancement logic in `server/src/bracket.js`.
-- `client/` — React (Vite) + react-router + socket.io-client. Pages: Home (create/join), Lobby (waiting room + live bracket), Admin (host-only: report results, adjust points).
+- `client/` — React (Vite) + react-router + socket.io-client. Pages: Home (create/join), Lobby (waiting room + live bracket), Admin (host-only: report results, adjust chips).
 
 ## Game economy
 
@@ -38,15 +38,15 @@ Implemented per the Texas SMASH'em Game Rules / Master Guide / Cashier Guide PDF
 - **Match Winner predictions / Cow Feed** — non-participants predict each match's winner; correct predictors are paid Cow Feed chips when the host reports the result.
 - **Stock Bets / Riding Double** — eliminated players can wager on a match's exact remaining-stock outcome; a chipless eliminated player can "ride" an existing bet for half (or a third, if stacked) of the winnings.
 - **Trump Card** — auto-granted to the first eliminated player; can be used any time before a match to clear an Upcoming Match Participant's boons.
-- **Clean Sweep / Double-Cross / Bushwhacked / Showdown** — auto-applied to player points when the tournament completes.
+- **Clean Sweep / Double-Cross / Bushwhacked / Showdown** — auto-applied to player chips when the tournament completes.
 - **Divvy Up** — host-triggered at the end to distribute the remaining Pot.
 
 ### Assumptions (numbers not printed in the text rules — verify against the physical game and adjust in Admin settings if needed)
 
 - **Stock Pool multipliers**: the doc says 6 slots each have a payout multiplier "displayed" on the physical token, but doesn't give the numbers. Defaulted to `[10, 6, 4, 3, 2, 1]` for stocks `0–5`; editable in Admin.
 - **Cow Feed betSpread**: formula is `(10 × betSpread²) + 20`, but the doc doesn't define how `betSpread` derives from "the odds created by other players' predictions." Implemented as `(incorrect predictors − correct predictors)` for that match (sign doesn't matter since it's squared).
-- **Bonus/penalty point values** for Clean Sweep, Double-Cross, Bushwhacked, Showdown: the doc only says "a points-bonus/penalty" without a number. Defaulted to +50/+30/−30/+75; editable in Admin.
-- **Weight of Winnings / Divvy Up**: the doc references this term for the payout loop order but never gives its formula. Modeled as each player's points total (min 1), looped Tournament Winner → most recent loser → ... until the Pot is exhausted.
+- **Bonus/penalty chip values** for Clean Sweep, Double-Cross, Bushwhacked, Showdown: the doc only says "a points-bonus/penalty" without a number. Defaulted to +50/+30/−30/+75 chips; editable in Admin.
+- **Weight of Winnings / Divvy Up**: the doc references this term for the payout loop order but never gives its formula. Modeled as each player's current chip stack (min 1), looped Tournament Winner → most recent loser → ... until the Pot is exhausted.
 
 These four are the only places where this implementation had to guess — everything else (Boon handicap scale, starting chips/boons, ante, cow feed minimum, boon awards, Trump Card timing, Stock Bet/Riding Double mechanics) is taken directly from the PDF.
 

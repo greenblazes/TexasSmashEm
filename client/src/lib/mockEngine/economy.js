@@ -15,7 +15,7 @@ export const DEFAULTS = {
     { stocks: 2, multiplier: 3 },
     { stocks: 3, multiplier: 5 },
   ],
-  bonusPoints: {
+  bonusChips: {
     cleanSweep: 50,
     doubleCross: 30,
     bushwhacked: -30,

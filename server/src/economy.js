@@ -1,5 +1,5 @@
 // Chip/Boon economy per the Texas SMASH'em rules doc.
-// Values not printed in the text rules (Stock Pool payout multipliers, bonus point
+// Values not printed in the text rules (Stock Pool payout multipliers, bonus chip
 // magnitudes) are host-configurable defaults — see lobby.settings.
 
 export const DEFAULTS = {
@@ -22,8 +22,8 @@ export const DEFAULTS = {
     { stocks: 2, multiplier: 3 },
     { stocks: 3, multiplier: 5 },
   ],
-  // Point bonus/penalty magnitudes — not specified numerically in the rules doc.
-  bonusPoints: {
+  // Bonus/penalty chip magnitudes — not specified numerically in the rules doc.
+  bonusChips: {
     cleanSweep: 50,
     doubleCross: 30,
     bushwhacked: -30,

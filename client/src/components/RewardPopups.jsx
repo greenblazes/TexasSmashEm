@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useLobby } from "../lib/LobbyContext.jsx";
 
-const TARGET_SELECTOR = { chips: ".chip-pill", points: ".points-pill" };
-const LABEL = { chips: "Chips", points: "Points" };
+const TARGET_SELECTOR = { chips: ".chip-pill" };
+const LABEL = { chips: "Chips" };
 
 // Exported so the /test tournament simulator can reuse the exact same popup
 // rendering/animation without needing the real LobbyContext.
@@ -33,8 +33,8 @@ export function RewardPopup({ reward, index, onDone }) {
   );
 }
 
-// Renders any queued chip/point reward popups. Mount this once on the page
-// where the chip-pill / points-pill header targets are visible (Lobby.jsx).
+// Renders any queued chip reward popups. Mount this once on the page where the
+// chip-pill header target is visible (Lobby.jsx).
 export default function RewardPopups() {
   const { rewards, dismissReward } = useLobby();
   return (
