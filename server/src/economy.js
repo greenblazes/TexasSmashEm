@@ -11,6 +11,8 @@ export const DEFAULTS = {
   cowFeedBase: 10,         // chips given to every spectator after each match
   cowFeedBonusMultiplier: 20, // bonus pool = this × number of spectators, split among correct predictors
   turnDurationMs: 30000,   // ms each player has to place boons/bets before their turn auto-advances
+  disableParticipantCountdown: false, // if true, sealed-boon phase never auto-advances — waits for both participants
+  disableSpectatorCountdown: false,   // if true, spectator turns never auto-advance — waits for each player's input
   // Stock Bets: an eliminated player wagers chips that the match victor (the player
   // they picked in their Match Prediction) will finish with exactly N stocks remaining.
   // A 3-stock match means the winner ends with 1, 2, or 3 stocks — so there are three
@@ -28,6 +30,7 @@ export const DEFAULTS = {
     doubleCross: 30,
     bushwhacked: -30,
     showdown: 75,
+    tPickCorrect: 40, // your Texas T-Pick won the whole tournament
   },
 };
 

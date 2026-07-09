@@ -85,6 +85,8 @@ function scheduleTurnTimer(code, matchId) {
   if (!preBet || preBet.phase === "complete") return;
 
   clearTurnTimer(matchId);
+  if (preBet.deadline == null) return; // countdown disabled for this phase — wait for input only
+
   const delay = Math.max(0, preBet.deadline - Date.now());
 
   const handle = setTimeout(() => {
@@ -253,6 +255,20 @@ io.on("connection", (socket) => {
       if (!lobby.bracket) throw new Error("Tournament not started");
       clearTurnTimer(matchId);
       reportMatchResult(lobby, matchId, winnerId, remainingStocks);
+      // Pre-betting for the next match does NOT start automatically here — the host
+      // clicks "Next Round" (below) once the next two participants are ready.
+      ack?.({ ok: true });
+      broadcastLobby(code);
+    } catch (err) {
+      ack?.({ ok: false, error: err.message });
+    }
+  });
+
+  socket.on("host:nextRound", ({ code, playerId }, ack) => {
+    try {
+      const lobby = getLobby(code);
+      requireHost(lobby, playerId);
+      if (!lobby.bracket) throw new Error("Tournament not started");
       initPreBetForReadyMatches(lobby);
       ack?.({ ok: true });
       broadcastLobby(code);

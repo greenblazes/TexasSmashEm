@@ -10,9 +10,11 @@ function freshPlayerEconomy() {
   return {
     chips: 0,
     boons: 0,
+    boonsPlaced: 0,
     texasTPick: null,
     hasTrumpCard: false,
     matchPredictions: {},
+    bonusHistory: [],
   };
 }
 
@@ -46,6 +48,8 @@ export function createMockLobby(playerNames) {
       cowFeedBase: DEFAULTS.cowFeedBase,
       cowFeedBonusMultiplier: DEFAULTS.cowFeedBonusMultiplier,
       turnDurationMs: DEFAULTS.turnDurationMs,
+      disableParticipantCountdown: DEFAULTS.disableParticipantCountdown,
+      disableSpectatorCountdown: DEFAULTS.disableSpectatorCountdown,
       stockPool: DEFAULTS.stockPool.map((s) => ({ ...s })),
       bonusChips: { ...DEFAULTS.bonusChips },
     },
@@ -55,5 +59,6 @@ export function createMockLobby(playerNames) {
     stockBets: {},
     matchPreBet: {},
     champion: null,
+    divvied: false,
   };
 }

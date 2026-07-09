@@ -820,3 +820,88 @@ details.card form { margin-top: 14px; }
   75%  { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* ═══════════════════════════════════
+   SCOREBOARD
+   Shown to everyone once the host runs Divvy Up. Players sorted by final chip
+   count; each row expands to reveal extra tournament stats.
+═══════════════════════════════════ */
+.scoreboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scoreboard-row {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.scoreboard-row.expanded {
+  border-color: var(--border-gold);
+}
+
+.scoreboard-row-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.scoreboard-rank {
+  font-family: var(--font-d);
+  font-size: 0.95rem;
+  color: var(--gold);
+  min-width: 28px;
+  flex-shrink: 0;
+}
+
+.scoreboard-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scoreboard-bonuses {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.scoreboard-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-d);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #D4A832, #F0C84A);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  flex-shrink: 0;
+  min-width: 64px;
+  justify-content: flex-end;
+}
+
+.scoreboard-caret {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.scoreboard-details {
+  padding: 0 14px 14px;
+}

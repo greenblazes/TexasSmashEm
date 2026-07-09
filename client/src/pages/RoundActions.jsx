@@ -28,9 +28,15 @@ function vibrate() {
   try { navigator.vibrate?.([200, 100, 200]); } catch {}
 }
 
+// A null deadline means the countdown is disabled for this phase — the host has
+// chosen to wait indefinitely for player input instead of auto-advancing.
 function useCountdown(deadline) {
-  const [msLeft, setMsLeft] = useState(() => Math.max(0, deadline - Date.now()));
+  const [msLeft, setMsLeft] = useState(() => (deadline == null ? null : Math.max(0, deadline - Date.now())));
   useEffect(() => {
+    if (deadline == null) {
+      setMsLeft(null);
+      return;
+    }
     setMsLeft(Math.max(0, deadline - Date.now()));
     const iv = setInterval(() => setMsLeft(Math.max(0, deadline - Date.now())), 250);
     return () => clearInterval(iv);
@@ -42,6 +48,16 @@ function useCountdown(deadline) {
 
 function ModalTimer({ deadline, totalMs }) {
   const msLeft = useCountdown(deadline);
+
+  if (msLeft == null) {
+    return (
+      <div className="modal-timer">
+        <div className="modal-timer-digits" style={{ color: "var(--gold)" }}>∞</div>
+        <div className="modal-timer-label">no time limit — take your time</div>
+      </div>
+    );
+  }
+
   const pct = totalMs > 0 ? (msLeft / totalMs) * 100 : 0;
   const secs = Math.ceil(msLeft / 1000);
   const color = pct > 50 ? "var(--green)" : pct > 25 ? "var(--gold)" : "var(--red)";
@@ -257,14 +273,38 @@ function MatchLocked({ match, lobby, isParticipant }) {
 // ── Pre-bet phase router ──────────────────────────────────────────────────────
 
 function MatchPreBet({ lobby, match, preBet, me, playerId, isParticipant, run, autoOpenModal }) {
-  const phase = preBet?.phase ?? "complete";
-  if (phase === "participants") {
+  // No preBet yet means this match just became ready but the host hasn't clicked
+  // "Next Round" — give the incoming participants a moment before betting starts.
+  if (!preBet) {
+    return <AwaitingNextRound match={match} me={me} />;
+  }
+  if (preBet.phase === "participants") {
     return <ParticipantPhase lobby={lobby} match={match} preBet={preBet} me={me} playerId={playerId} isParticipant={isParticipant} run={run} autoOpenModal={autoOpenModal} />;
   }
-  if (phase === "spectators") {
+  if (preBet.phase === "spectators") {
     return <SpectatorPhase lobby={lobby} match={match} preBet={preBet} me={me} playerId={playerId} isParticipant={isParticipant} run={run} autoOpenModal={autoOpenModal} />;
   }
   return <PreBetComplete lobby={lobby} match={match} preBet={preBet} me={me} playerId={playerId} isParticipant={isParticipant} run={run} />;
+}
+
+// ── Awaiting the host's "Next Round" click ────────────────────────────────────
+
+function AwaitingNextRound({ match, me }) {
+  return (
+    <div className="card card-red">
+      <span className="section-label">Up Next</span>
+      <div className="vs-banner" style={{ marginBottom: 14 }}>
+        <span className="vs-name" style={{ color: "var(--blue-light)" }}>{match.playerAName}</span>
+        <span className="vs-sep">VS</span>
+        <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
+      </div>
+      <p style={{ fontSize: "0.82rem", color: "var(--text-dim)" }}>
+        {me.isHost
+          ? "Give the next two participants a moment to get ready, then start the round from the Host Admin page."
+          : "Waiting for the host to start the next round…"}
+      </p>
+    </div>
+  );
 }
 
 // ── Participant sealed boon phase ─────────────────────────────────────────────

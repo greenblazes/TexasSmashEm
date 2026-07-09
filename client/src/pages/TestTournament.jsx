@@ -17,6 +17,7 @@ import ChipIcon from "../components/ChipIcon.jsx";
 import { RewardPopup } from "../components/RewardPopups.jsx";
 import RoundActions from "./RoundActions.jsx";
 import Bracket from "./Bracket.jsx";
+import Scoreboard from "./Scoreboard.jsx";
 
 const PLAYER_NAMES = [
   "Alice", "Bob", "Carol", "Dave", "Erin", "Frank",
@@ -163,17 +164,23 @@ export default function TestTournament() {
               </div>
             )}
 
-            <div className="card card-gold">
-              <div className="pot-display">
-                <span className="pot-label">Tournament Pot</span>
-                <div className="pot-amount">{lobby.pot.toLocaleString()}</div>
-              </div>
-            </div>
+            {lobby.status === "complete" && lobby.divvied ? (
+              <Scoreboard lobby={lobby} />
+            ) : (
+              <>
+                <div className="card card-gold">
+                  <div className="pot-display">
+                    <span className="pot-label">Tournament Pot</span>
+                    <div className="pot-amount">{lobby.pot.toLocaleString()}</div>
+                  </div>
+                </div>
 
-            <div className="card">
-              <span className="section-label">Bracket</span>
-              <Bracket bracket={lobby.bracket} highlightPlayerId={viewAsId} />
-            </div>
+                <div className="card">
+                  <span className="section-label">Bracket</span>
+                  <Bracket bracket={lobby.bracket} highlightPlayerId={viewAsId} />
+                </div>
+              </>
+            )}
 
             {lobby.status === "in_progress" && (
               <RoundActions lobby={lobby} me={me} playerId={viewAsId} />
@@ -291,6 +298,10 @@ function QuickActions({ lobby, hostId, stocksInput, setStocksInput }) {
     await emitAck("host:startMatch", { code: lobby.code, playerId: hostId, matchId: active.id });
   }
 
+  async function nextRound() {
+    await emitAck("host:nextRound", { code: lobby.code, playerId: hostId });
+  }
+
   async function reportResult(winnerId) {
     await emitAck("host:reportResult", { code: lobby.code, playerId: hostId, matchId: active.id, winnerId, remainingStocks: Number(stocksInput) });
   }
@@ -299,8 +310,14 @@ function QuickActions({ lobby, hostId, stocksInput, setStocksInput }) {
     <div style={{ marginBottom: 16 }}>
       <div className="section-label">Quick Actions</div>
       <p style={{ fontSize: "0.72rem", color: "var(--text-dim)", marginBottom: 8 }}>
-        {active.playerAName} vs {active.playerBName} — {active.status === "ready" ? (preBet?.phase || "ready") : active.status}
+        {active.playerAName} vs {active.playerBName} — {active.status === "ready" ? (preBet?.phase || "awaiting next round") : active.status}
       </p>
+
+      {active.status === "ready" && !preBet && (
+        <button className="btn-gold" style={{ width: "100%", marginBottom: 8 }} onClick={nextRound}>
+          ▶ Next Round
+        </button>
+      )}
 
       {active.status === "ready" && preBet?.phase === "participants" && (
         <button className="btn-blue" style={{ width: "100%", marginBottom: 8 }} onClick={submitRemainingParticipants}>
@@ -314,7 +331,7 @@ function QuickActions({ lobby, hostId, stocksInput, setStocksInput }) {
         </button>
       )}
 
-      {active.status === "ready" && (!preBet || preBet.phase === "complete") && (
+      {active.status === "ready" && preBet?.phase === "complete" && (
         <button className="btn-gold" style={{ width: "100%", marginBottom: 8 }} onClick={startMatch}>
           ▶ Start Match
         </button>

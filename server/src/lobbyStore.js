@@ -10,9 +10,11 @@ function freshPlayerEconomy() {
   return {
     chips: 0, // assigned at tournament start
     boons: 0,
+    boonsPlaced: 0, // cumulative count of boons this player has placed (on self or others)
     texasTPick: null,
     hasTrumpCard: false,
     matchPredictions: {}, // matchId -> predicted winnerId
+    bonusHistory: [], // list of bonus types applied at tournament end, e.g. ["doubleCross", "showdown"]
   };
 }
 
@@ -56,6 +58,8 @@ export function createLobby(hostName) {
       cowFeedBase: DEFAULTS.cowFeedBase,
       cowFeedBonusMultiplier: DEFAULTS.cowFeedBonusMultiplier,
       turnDurationMs: DEFAULTS.turnDurationMs,
+      disableParticipantCountdown: DEFAULTS.disableParticipantCountdown,
+      disableSpectatorCountdown: DEFAULTS.disableSpectatorCountdown,
       stockPool: DEFAULTS.stockPool.map((s) => ({ ...s })),
       bonusChips: { ...DEFAULTS.bonusChips },
     },
@@ -65,6 +69,7 @@ export function createLobby(hostName) {
     stockBets: {}, // matchId -> [{ playerId, stocks, wager, predictedWinnerId, riders: [] }]
     matchPreBet: {}, // matchId -> pre-bet phase state
     champion: null,
+    divvied: false, // true once the host has run Divvy Up — client shows the Scoreboard
   };
   lobbies.set(code, lobby);
   return lobby;

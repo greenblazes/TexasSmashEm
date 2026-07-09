@@ -10,6 +10,8 @@ export const DEFAULTS = {
   cowFeedBase: 10,         // chips given to every spectator after each match
   cowFeedBonusMultiplier: 20, // bonus pool = this × number of spectators, split among correct predictors
   turnDurationMs: 30000,   // ms each player has to place boons/bets before their turn auto-advances
+  disableParticipantCountdown: false,
+  disableSpectatorCountdown: false,
   stockPool: [
     { stocks: 1, multiplier: 2 },
     { stocks: 2, multiplier: 3 },
@@ -20,6 +22,7 @@ export const DEFAULTS = {
     doubleCross: 30,
     bushwhacked: -30,
     showdown: 75,
+    tPickCorrect: 40,
   },
 };
 

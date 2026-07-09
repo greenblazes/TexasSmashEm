@@ -9,6 +9,7 @@ import TrumpIcon from "../components/TrumpIcon.jsx";
 import { Link } from "react-router-dom";
 import RoundActions from "./RoundActions.jsx";
 import Bracket from "./Bracket.jsx";
+import Scoreboard from "./Scoreboard.jsx";
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -100,10 +101,12 @@ const NAV = [
   ["#lobby-code",      "Lobby Code"],
   ["#progress",        "Progress & Countdown"],
   ["#bracket-view",    "Bracket"],
+  ["#awaiting-next-round", "Awaiting Next Round"],
   ["#phase-participant","Pre-Bet: Participant"],
   ["#phase-spectator", "Pre-Bet: Spectator"],
   ["#phase-complete",  "Pre-Bet: Complete"],
   ["#match-locked",    "Match In Progress"],
+  ["#scoreboard",      "Scoreboard"],
   ["#notifs",          "Notifications"],
 ];
 
@@ -158,10 +161,12 @@ export default function TestBed() {
         <LobbyCodeSection />
         <ProgressSection />
         <BracketSection />
+        <AwaitingNextRoundSection />
         <ParticipantPhaseSection />
         <SpectatorPhaseSection />
         <PreBetCompleteSection />
         <MatchLockedSection />
+        <ScoreboardSection />
         <NotifsSection />
       </main>
     </div>
@@ -403,6 +408,32 @@ function BracketSection() {
   );
 }
 
+function AwaitingNextRoundSection() {
+  return (
+    <Section id="awaiting-next-round" label="Awaiting Next Round">
+      <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", marginBottom: 16 }}>
+        Shown right after a match ends — the next match is "ready" but the host hasn't
+        clicked "Next Round" yet (from Host Admin), so betting hasn't started.
+        Showing as <strong style={{ color: "var(--text)" }}>Alice (Host)</strong>.
+      </p>
+      <RoundActions
+        lobby={makeLobby("ready", null)}
+        me={{ ...PLAYERS.p1 }}
+        playerId="p1"
+      />
+
+      <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", margin: "24px 0 16px" }}>
+        Showing as <strong style={{ color: "var(--text)" }}>Charlie (spectator)</strong>.
+      </p>
+      <RoundActions
+        lobby={makeLobby("ready", null)}
+        me={{ ...PLAYERS.p3 }}
+        playerId="p3"
+      />
+    </Section>
+  );
+}
+
 function ParticipantPhaseSection() {
   const preBet = {
     phase: "participants",
@@ -526,6 +557,63 @@ function MatchLockedSection() {
         me={{ ...PLAYERS.p3 }}
         playerId="p3"
       />
+    </Section>
+  );
+}
+
+function ScoreboardSection() {
+  const players = [
+    {
+      id: "p1", name: "Alice", isHost: true, chips: 420, boonsPlaced: 4,
+      texasTPick: "p3", matchPredictions: { m2: "p3" },
+      bonusHistory: ["cleanSweep", "doubleCross", "showdown"],
+    },
+    {
+      id: "p2", name: "Bob", isHost: false, chips: 260, boonsPlaced: 2,
+      texasTPick: "p1", matchPredictions: { m2: "p3", m3: "p3" },
+      bonusHistory: ["bushwhacked", "tPickCorrect"],
+    },
+    {
+      id: "p3", name: "Charlie", isHost: false, chips: 240, boonsPlaced: 3,
+      texasTPick: "p4", matchPredictions: { m1: "p2" },
+      bonusHistory: ["doubleCross"],
+    },
+    {
+      id: "p4", name: "Diana", isHost: false, chips: 210, boonsPlaced: 1,
+      texasTPick: "p1", matchPredictions: { m1: "p2", m3: "p1" },
+      bonusHistory: ["tPickCorrect"],
+    },
+  ];
+
+  const lobby = {
+    status: "complete",
+    divvied: true,
+    champion: { id: "p1", name: "Alice" },
+    players,
+    bracket: {
+      rounds: [
+        [
+          { id: "m1", round: 1, playerA: "p1", playerAName: "Alice", playerB: "p2", playerBName: "Bob", status: "complete", winnerId: "p1" },
+          { id: "m2", round: 1, playerA: "p3", playerAName: "Charlie", playerB: "p4", playerBName: "Diana", status: "complete", winnerId: "p3" },
+        ],
+        [
+          { id: "m3", round: 2, playerA: "p1", playerAName: "Alice", playerB: "p3", playerBName: "Charlie", status: "complete", winnerId: "p1" },
+        ],
+      ],
+    },
+    boonPlacements: {
+      m1: { p1: 2, p2: 1 },
+      m2: { p3: 1, p4: 3 },
+      m3: { p1: 5, p3: 2 },
+    },
+  };
+
+  return (
+    <Section id="scoreboard" label="Scoreboard (post-Divvy-Up)">
+      <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", marginBottom: 16 }}>
+        Shown to everyone once the host runs Divvy Up. Click a row to expand it.
+      </p>
+      <Scoreboard lobby={lobby} />
     </Section>
   );
 }
