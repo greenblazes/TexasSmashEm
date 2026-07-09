@@ -4,6 +4,7 @@ import Lobby from "./pages/Lobby.jsx";
 import Admin from "./pages/Admin.jsx";
 import SuperAdmin from "./pages/SuperAdmin.jsx";
 import TestBed from "./pages/TestBed.jsx";
+import TestTournament from "./pages/TestTournament.jsx";
 import { LobbyProvider } from "./lib/LobbyContext.jsx";
 import RulesPanel from "./components/RulesPanel.jsx";
 
@@ -14,6 +15,7 @@ export default function App() {
       <Routes>
         <Route path="/super-admin" element={<SuperAdmin />} />
         <Route path="/style" element={<TestBed />} />
+        <Route path="/test" element={<TestTournament />} />
         <Route
           path="*"
           element={

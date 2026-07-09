@@ -1,4 +1,11 @@
-import { nanoid } from "nanoid";
+// Client-side mirror of server/src/bracket.js for the /test tournament simulator.
+// Kept behaviorally identical to the server copy (including the single-active-match
+// sequencing) so the simulator shows exactly what the real game does. Only dependency
+// swapped out: nanoid -> a tiny local id generator (no server-only deps in the client bundle).
+
+function id(len = 8) {
+  return Math.random().toString(36).slice(2, 2 + len).padEnd(len, "0");
+}
 
 function nextPowerOfTwo(n) {
   let p = 1;
@@ -22,10 +29,6 @@ export function buildBracket(players) {
   const matchCount = size / 2;
   const seeded = shuffle(players);
 
-  // byeCount is always < matchCount, so distribute one bye per match (paired
-  // with a real player) across the first byeCount matches, then pair the
-  // remaining real players against each other. This avoids two byes ever
-  // landing in the same match (which would create a dead, unresolvable slot).
   const slots = [];
   let nextPlayerIdx = 0;
   for (let m = 0; m < matchCount; m++) {
@@ -40,8 +43,6 @@ export function buildBracket(players) {
   const rounds = [];
   const roundCount = Math.log2(size);
 
-  // Round 1 matches: both slots are already known (real player or true bye),
-  // so they're immediately resolvable — expectedFeeders 0 means "decide now".
   const round1 = [];
   for (let i = 0; i < size; i += 2) {
     const a = slots[i];
@@ -50,10 +51,6 @@ export function buildBracket(players) {
   }
   rounds.push(round1);
 
-  // Empty placeholder rounds: each match here depends on exactly 2 feeder
-  // matches from the previous round, and must wait for BOTH to report in
-  // before deciding ready/bye — a single filled slot does NOT mean a bye,
-  // it just means the other feeder match hasn't been played yet.
   for (let r = 2; r <= roundCount; r++) {
     const matchCount = size / 2 ** r;
     const round = [];
@@ -65,7 +62,6 @@ export function buildBracket(players) {
 
   const bracket = { rounds, roundCount };
 
-  // Wire up nextMatchId links and auto-advance byes
   for (let r = 0; r < roundCount - 1; r++) {
     rounds[r].forEach((match, idx) => {
       const nextMatch = rounds[r + 1][Math.floor(idx / 2)];
@@ -74,7 +70,6 @@ export function buildBracket(players) {
     });
   }
 
-  // Auto-resolve byes (a player facing null opponent auto-wins)
   for (const match of rounds[0]) {
     resolveByeIfNeeded(bracket, match);
   }
@@ -87,7 +82,7 @@ export function buildBracket(players) {
 
 function makeMatch(round, playerA, playerB, expectedFeeders) {
   return {
-    id: nanoid(8),
+    id: id(8),
     round,
     playerA: playerA ? playerA.id : null,
     playerB: playerB ? playerB.id : null,
@@ -126,10 +121,9 @@ function resolveByeIfNeeded(bracket, match) {
   // "ready" when activateNextMatch() picks it as the next match in the queue.
 }
 
-// Only one match may be "ready" or "in_progress" at any time, so the whole
-// lobby watches/bets on a single match. Matches are activated strictly in
-// bracket order — every round-1 match top to bottom before any round-2 match,
-// etc. — even if a later match's feeders already both resolved.
+// Only one match may be "ready" or "in_progress" at any time. Matches are activated
+// strictly in bracket order — every round-1 match top to bottom before any round-2
+// match, etc. — even if a later match's feeders already both resolved.
 export function activateNextMatch(bracket) {
   const alreadyActive = bracket.rounds
     .flat()

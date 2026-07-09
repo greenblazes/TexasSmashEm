@@ -1,3 +1,8 @@
+// Client-side mirror of server/src/gameEngine.js for the /test tournament simulator.
+// Kept behaviorally identical to the server copy so the simulator's rules, math, and
+// state machine exactly match production. Only the import paths differ (point at the
+// local bracket.js/economy.js copies instead of the server ones).
+
 import { buildBracket, startMatch as bracketStartMatch, reportResult as bracketReportResult, isTournamentComplete, getChampion } from "./bracket.js";
 import { boonHandicapPercent, cowFeed } from "./economy.js";
 
@@ -63,8 +68,6 @@ export function setMatchPrediction(lobby, playerId, matchId, predictedWinnerId) 
     throw new Error("Prediction must be one of the two match participants");
   }
 
-  // Predictions are only made during the player's own turn in the pre-match
-  // betting popup — not before spectator turns begin, and not after they end.
   const preBet = lobby.matchPreBet[matchId];
   if (preBet) {
     if (preBet.phase !== "spectators") throw new Error(
@@ -77,8 +80,6 @@ export function setMatchPrediction(lobby, playerId, matchId, predictedWinnerId) 
 
   player.matchPredictions[matchId] = predictedWinnerId;
 
-  // Keep any existing Stock Bet's predicted winner in sync with the current prediction,
-  // since the bet only pays out when that prediction is correct.
   const existingBet = (lobby.stockBets[matchId] || []).find((b) => b.playerId === playerId);
   if (existingBet) existingBet.predictedWinnerId = predictedWinnerId;
 }
@@ -118,14 +119,13 @@ export function initMatchPreBet(lobby, matchId) {
     turnDurationMs: lobby.settings.turnDurationMs,
     deadline: Date.now() + lobby.settings.turnDurationMs,
     participants,
-    sealedBoons: {}, // participantId -> amount (hidden from broadcast until revealed)
+    sealedBoons: {},
     spectatorOrder,
     currentTurnIdx: 0,
-    turnActions: {}, // spectatorId -> { boons: {targetId: n}, bet: null, rideDouble: null }
+    turnActions: {},
   };
 }
 
-// Returns true when both participants have submitted (caller should reveal immediately).
 export function submitParticipantBoons(lobby, matchId, playerId, amount) {
   const preBet = lobby.matchPreBet[matchId];
   if (!preBet || preBet.phase !== "participants") throw new Error("Not in participant boon phase");
@@ -147,7 +147,6 @@ export function revealAndStartSpectators(lobby, matchId) {
   const preBet = lobby.matchPreBet[matchId];
   if (!preBet || preBet.phase !== "participants") return;
 
-  // Merge sealed boons into public boonPlacements
   for (const [participantId, qty] of Object.entries(preBet.sealedBoons)) {
     if (qty > 0) {
       if (!lobby.boonPlacements[matchId]) lobby.boonPlacements[matchId] = {};
@@ -165,7 +164,6 @@ export function revealAndStartSpectators(lobby, matchId) {
   preBet.deadline = Date.now() + preBet.turnDurationMs;
 }
 
-// Returns true when all spectator turns are done.
 export function advanceSpectatorTurn(lobby, matchId) {
   const preBet = lobby.matchPreBet[matchId];
   if (!preBet || preBet.phase !== "spectators") return true;
@@ -259,10 +257,6 @@ export function placeStockBet(lobby, playerId, matchId, stocks, wager) {
     if (preBet.spectatorOrder[preBet.currentTurnIdx] !== playerId) throw new Error("It is not your turn");
   }
 
-  // A Stock Bet rides on the player's Match Prediction: it only pays if that
-  // prediction is correct. We don't require a prediction to be set first — the client
-  // gates the UI on that — so we just snapshot whatever prediction exists now (if any).
-  // setMatchPrediction keeps this in sync if the prediction is set or changed later.
   const predictedWinnerId = player.matchPredictions[matchId] ?? null;
 
   const slot = lobby.settings.stockPool.find((s) => s.stocks === Number(stocks));
@@ -327,8 +321,6 @@ export function playTrumpCard(lobby, playerId, matchId, targetParticipantId) {
   player.hasTrumpCard = false;
 }
 
-// Host reports the match result, including the winner's remaining stocks.
-// This drives Boons awarded, Cow Feed payouts, Stock Bet settlement, and Trump Card grant.
 export function reportMatchResult(lobby, matchId, winnerId, remainingStocks) {
   const match = findMatch(lobby.bracket, matchId);
   if (!match) throw new Error("Match not found");
@@ -353,7 +345,6 @@ export function reportMatchResult(lobby, matchId, winnerId, remainingStocks) {
   }
   lobby.firstMatchCompleted = true;
 
-  // Cow Feed: base chips to all spectators, bonus pool split among correct predictors.
   const spectators = lobby.players.filter(
     (p) => p.id !== match.playerA && p.id !== match.playerB
   );
@@ -369,9 +360,6 @@ export function reportMatchResult(lobby, matchId, winnerId, remainingStocks) {
   for (const p of spectators) p.chips += base;
   for (const p of correct) p.chips += bonus;
 
-  // Stock Bets settlement.
-  // A bet wins only when BOTH are true: the bettor predicted the actual winner,
-  // and the winner finished with exactly the wagered number of stocks remaining.
   const bets = lobby.stockBets[matchId] || [];
   for (const bet of bets) {
     const bettor = lobby.players.find((p) => p.id === bet.playerId);
@@ -411,14 +399,10 @@ export function reportMatchResult(lobby, matchId, winnerId, remainingStocks) {
 
 function applyEndOfTournamentBonuses(lobby) {
   const { bonusPoints } = lobby.settings;
-  const champion = lobby.champion;
   const allMatches = lobby.bracket.rounds.flat().filter((m) => m.winnerId);
   const finalMatch = lobby.bracket.rounds[lobby.bracket.rounds.length - 1][0];
 
   for (const player of lobby.players) {
-    // Clean Sweep: correctly predicted the winner of every single match in the tournament.
-    // Matches the player participated in are excluded (can't predict your own match).
-    // Skipping a prediction for any eligible match disqualifies the player.
     const eligibleMatches = allMatches.filter(
       (m) => m.playerA !== player.id && m.playerB !== player.id
     );
@@ -429,7 +413,6 @@ function applyEndOfTournamentBonuses(lobby) {
       if (allCorrect) player.points += bonusPoints.cleanSweep;
     }
 
-    // Double-Cross / Bushwhacked: player faced their own Texas T-Pick at some point.
     if (player.texasTPick) {
       const matchesAgainstPick = allMatches.filter(
         (m) =>
@@ -445,7 +428,6 @@ function applyEndOfTournamentBonuses(lobby) {
       }
     }
 
-    // Showdown: won the final against their own Texas T-Pick.
     if (
       finalMatch?.winnerId === player.id &&
       player.texasTPick &&
@@ -456,12 +438,6 @@ function applyEndOfTournamentBonuses(lobby) {
   }
 }
 
-// Divvy Up: distribute the Pot in a loop ordered [Tournament Winner, most recent
-// loser, next most recent loser, ...], giving each player chips equal to their
-// "Weight of Winnings" (modeled here as their points score, floored at 0) per
-// lap, looping until the Pot is exhausted. The doc references Weight of Winnings
-// without giving its exact formula, so this is the best-effort reading — the
-// host can re-run with adjusted settings if it doesn't match the physical game.
 export function divvyUp(lobby) {
   if (lobby.status !== "complete") throw new Error("Tournament is not complete");
 
