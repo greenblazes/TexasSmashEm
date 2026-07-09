@@ -99,11 +99,12 @@ export default function Lobby() {
         <div style={{ textAlign: "center" }}>
           <span className="wordmark game-title"><ChipIcon size={22} /> Texas SMASH'em <ChipIcon size={22} /></span>
         </div>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <span className="page-subtitle">
-              Lobby {lobby.code}
-            </span>
+            <div className="page-subtitle-row">
+              <span className="page-subtitle">Lobby</span>
+              <span className="page-subtitle-code">{lobby.code}</span>
+            </div>
 
           </div>
           <div className="page-header-right">
@@ -148,10 +149,10 @@ export default function Lobby() {
       </div>
       
       <div style={{ textAlign: "center", marginBottom: 8 }}>
-              <span className={`lobby-status lobby-status-${lobby.status}`}>
-                {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
-              </span>
-            </div>
+        <span className={`lobby-status lobby-status-${lobby.status}`}>
+          {lobby.status === "waiting" ? "Waiting" : lobby.status === "in_progress" ? "In Progress" : "Complete"}
+        </span>
+      </div>
       {lobby.status === "waiting" && (
         <div className="cols-2">
           <div>
