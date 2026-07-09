@@ -4,6 +4,7 @@ import { matchHandicap, boonHandicapPercent } from "../lib/economy.js";
 import TrumpIcon from "../components/TrumpIcon.jsx";
 import TPickIcon from "../components/TPickIcon.jsx";
 import stockBetImg from "../assets/icons/stockbet.png";
+import matchPickIcon from "../assets/icons/match-prediction.png";
 
 function playerName(lobby, id) {
   return lobby.players.find((p) => p.id === id)?.name || "—";
@@ -667,17 +668,12 @@ function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run
         {/* Match prediction */}
         <div className="modal-section">
           <SectionLabel>Match Prediction</SectionLabel>
-          <div className="prediction-toggle">
-            <button
-              className={`prediction-btn${prediction === match.playerA ? " selected-a" : ""}`}
-              onClick={() => setPrediction(prediction === match.playerA ? "" : match.playerA)}
-            >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, margin: "0 auto 10px", marginTop: 10, marginBottom: 10 }}>
+            <button style={{ width: "50%" }} className={`prediction-btn${prediction === match.playerA ? " selected-a" : ""} ${!prediction ? "card-blink" : ""}`} onClick={() => setPrediction(prediction === match.playerA ? "" : match.playerA)}>
               {match.playerAName}
             </button>
-            <button
-              className={`prediction-btn${prediction === match.playerB ? " selected-b" : ""}`}
-              onClick={() => setPrediction(prediction === match.playerB ? "" : match.playerB)}
-            >
+            <img src={matchPickIcon} alt="Match Prediction" style={{ display: "block", width: "60%", maxWidth: 80, height: "auto", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.5))" }} draggable={false} />
+            <button style={{ width: "50%" }} className={`prediction-btn${prediction === match.playerB ? " selected-b" : ""} ${!prediction ? "card-blink" : ""}`} onClick={() => setPrediction(prediction === match.playerB ? "" : match.playerB)}>
               {match.playerBName}
             </button>
           </div>

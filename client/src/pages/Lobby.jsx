@@ -26,7 +26,7 @@ function TexasTPickSelector({ lobby, me, playerId }) {
   }
 
   return (
-    <div className="card card-blue" style={{ marginTop: 14, textAlign: "center" }}>
+    <div className={`card card-blue ${me.texasTPick ? "" : "card-blink"}`} style={{ marginTop: 14, textAlign: "center" }}>
       <span className="section-label">Texas T-Pick</span>
       <TPickIcon size={56} style={{ marginBottom: 10 }} />
       <p style={{ marginBottom: 10 }}>Who will win the whole tournament? Locks in when play begins.</p>
@@ -97,7 +97,7 @@ export default function Lobby() {
       {isHost && <AdminPanel lobby={lobby} playerId={playerId} />}
       <div className="page-header">
         <div style={{ textAlign: "center" }}>
-          <span className="wordmark game-title"><ChipIcon size={22} /> Texas SMASH'em <ChipIcon size={22} /></span>
+          <span className="wordmark game-title"><ChipIcon size={12} /> Texas SMASH'em <ChipIcon size={12} /></span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
