@@ -32,7 +32,7 @@ export default function Scoreboard({ lobby }) {
                   ))}
                 </span>
                 <span className="scoreboard-chips">
-                  <ChipIcon size={18} className="chip-icon" />
+                  <ChipIcon size={18} />
                   {player.chips}
                 </span>
                 <span className="scoreboard-caret">{expanded ? "▲" : "▼"}</span>
