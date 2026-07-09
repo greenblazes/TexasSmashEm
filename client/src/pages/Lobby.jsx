@@ -6,6 +6,7 @@ import Bracket from "./Bracket.jsx";
 import ChipIcon from "../components/ChipIcon.jsx";
 import RoundActions from "./RoundActions.jsx";
 import RewardPopups from "../components/RewardPopups.jsx";
+import Scoreboard from "./Scoreboard.jsx";
 
 function TexasTPickSelector({ lobby, me, playerId }) {
   if (!me) return null;
@@ -152,17 +153,23 @@ export default function Lobby() {
             </div>
           )}
 
-          <div className="card card-gold">
-            <div className="pot-display">
-              <span className="pot-label">Tournament Pot</span>
-              <div className="pot-amount">{lobby.pot.toLocaleString()}</div>
-            </div>
-          </div>
+          {lobby.status === "complete" && lobby.divvied ? (
+            <Scoreboard lobby={lobby} />
+          ) : (
+            <>
+              <div className="card card-gold">
+                <div className="pot-display">
+                  <span className="pot-label">Tournament Pot</span>
+                  <div className="pot-amount">{lobby.pot.toLocaleString()}</div>
+                </div>
+              </div>
 
-          <div className="card">
-            <span className="section-label">Bracket</span>
-            <Bracket bracket={lobby.bracket} highlightPlayerId={playerId} />
-          </div>
+              <div className="card">
+                <span className="section-label">Bracket</span>
+                <Bracket bracket={lobby.bracket} highlightPlayerId={playerId} />
+              </div>
+            </>
+          )}
 
           {lobby.status === "in_progress" && (
             <RoundActions lobby={lobby} me={me} playerId={playerId} />

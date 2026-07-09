@@ -21,6 +21,8 @@ export function createMockDispatcher({ getLobby, onChange }) {
     if (!preBet || preBet.phase === "complete") return;
 
     clearTurnTimer(matchId);
+    if (preBet.deadline == null) return; // countdown disabled for this phase — wait for input only
+
     const delay = Math.max(0, preBet.deadline - Date.now());
 
     const handle = setTimeout(() => {
@@ -68,6 +70,11 @@ export function createMockDispatcher({ getLobby, onChange }) {
         case "host:reportResult": {
           clearTurnTimer(matchId);
           engine.reportMatchResult(lobby, matchId, payload.winnerId, payload.remainingStocks);
+          // Pre-betting for the next match waits for an explicit "host:nextRound".
+          result = { ok: true };
+          break;
+        }
+        case "host:nextRound": {
           initPreBetForReadyMatches(lobby);
           result = { ok: true };
           break;

@@ -33,9 +33,11 @@ export function startTournament(lobby) {
     p.chips -= anteAmount;
     lobby.pot += anteAmount;
     p.boons = startingBoons;
+    p.boonsPlaced = 0;
     p.eliminated = false;
     p.hasTrumpCard = false;
     p.matchPredictions = {};
+    p.bonusHistory = [];
   }
 
   lobby.bracket = buildBracket(lobby.players.map((p) => ({ id: p.id, name: p.name })));
@@ -117,7 +119,7 @@ export function initMatchPreBet(lobby, matchId) {
   lobby.matchPreBet[matchId] = {
     phase: "participants", // participants | spectators | complete
     turnDurationMs: lobby.settings.turnDurationMs,
-    deadline: Date.now() + lobby.settings.turnDurationMs,
+    deadline: lobby.settings.disableParticipantCountdown ? null : Date.now() + lobby.settings.turnDurationMs,
     participants,
     sealedBoons: {},
     spectatorOrder,
@@ -137,7 +139,10 @@ export function submitParticipantBoons(lobby, matchId, playerId, amount) {
   const qty = Number(amount);
   if (!Number.isInteger(qty) || qty < 0) throw new Error("Amount must be a non-negative integer");
   if (qty > 0 && player.boons < qty) throw new Error("Not enough boons");
-  if (qty > 0) player.boons -= qty;
+  if (qty > 0) {
+    player.boons -= qty;
+    player.boonsPlaced += qty;
+  }
 
   preBet.sealedBoons[playerId] = qty;
   return preBet.participants.every((id) => id in preBet.sealedBoons);
@@ -161,7 +166,7 @@ export function revealAndStartSpectators(lobby, matchId) {
 
   preBet.phase = "spectators";
   preBet.currentTurnIdx = 0;
-  preBet.deadline = Date.now() + preBet.turnDurationMs;
+  preBet.deadline = lobby.settings.disableSpectatorCountdown ? null : Date.now() + preBet.turnDurationMs;
 }
 
 export function advanceSpectatorTurn(lobby, matchId) {
@@ -174,7 +179,7 @@ export function advanceSpectatorTurn(lobby, matchId) {
     return true;
   }
 
-  preBet.deadline = Date.now() + preBet.turnDurationMs;
+  preBet.deadline = lobby.settings.disableSpectatorCountdown ? null : Date.now() + preBet.turnDurationMs;
   return false;
 }
 
@@ -220,6 +225,7 @@ export function placeBoon(lobby, playerId, matchId, targetParticipantId, amount)
   if (player.boons < qty) throw new Error("Not enough boons");
 
   player.boons -= qty;
+  player.boonsPlaced += qty;
   if (!lobby.boonPlacements[matchId]) lobby.boonPlacements[matchId] = {};
   lobby.boonPlacements[matchId][targetParticipantId] = (lobby.boonPlacements[matchId][targetParticipantId] || 0) + qty;
 
@@ -399,10 +405,13 @@ export function reportMatchResult(lobby, matchId, winnerId, remainingStocks) {
 
 function applyEndOfTournamentBonuses(lobby) {
   const { bonusChips } = lobby.settings;
+  const champion = lobby.champion;
   const allMatches = lobby.bracket.rounds.flat().filter((m) => m.winnerId);
   const finalMatch = lobby.bracket.rounds[lobby.bracket.rounds.length - 1][0];
 
   for (const player of lobby.players) {
+    player.bonusHistory = [];
+
     const eligibleMatches = allMatches.filter(
       (m) => m.playerA !== player.id && m.playerB !== player.id
     );
@@ -410,7 +419,10 @@ function applyEndOfTournamentBonuses(lobby) {
       const allCorrect = eligibleMatches.every(
         (m) => player.matchPredictions[m.id] === m.winnerId
       );
-      if (allCorrect) player.chips += bonusChips.cleanSweep;
+      if (allCorrect) {
+        player.chips += bonusChips.cleanSweep;
+        player.bonusHistory.push("cleanSweep");
+      }
     }
 
     if (player.texasTPick) {
@@ -422,10 +434,17 @@ function applyEndOfTournamentBonuses(lobby) {
       for (const m of matchesAgainstPick) {
         if (m.winnerId === player.id) {
           player.chips += bonusChips.doubleCross;
+          player.bonusHistory.push("doubleCross");
         } else {
           player.chips += bonusChips.bushwhacked;
+          player.bonusHistory.push("bushwhacked");
         }
       }
+    }
+
+    if (champion && player.texasTPick === champion.id) {
+      player.chips += bonusChips.tPickCorrect;
+      player.bonusHistory.push("tPickCorrect");
     }
 
     if (
@@ -434,6 +453,7 @@ function applyEndOfTournamentBonuses(lobby) {
       (finalMatch.playerA === player.texasTPick || finalMatch.playerB === player.texasTPick)
     ) {
       player.chips += bonusChips.showdown;
+      player.bonusHistory.push("showdown");
     }
   }
 }
@@ -477,5 +497,6 @@ export function divvyUp(lobby) {
     if (p) p.chips += amount;
   }
   lobby.pot = 0;
+  lobby.divvied = true;
   return Object.fromEntries(payouts);
 }
