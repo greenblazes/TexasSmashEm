@@ -171,7 +171,7 @@ export default function TestTournament() {
           {lobby.status !== "waiting" && (
             <BoonDrawer
               open={boonDrawerOpen}
-              cost={Math.round(lobby.settings.buyBoonsCost / lobby.settings.buyBoonsAmount)}
+              cost={lobby.settings.boonCost}
               chips={me.chips ?? 0}
               onBuy={() => emitAck("player:buyBoons", { code: lobby.code, playerId: viewAsId, quantity: 1 })}
             />

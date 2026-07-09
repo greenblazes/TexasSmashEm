@@ -28,7 +28,7 @@ const BASE_MATCH = {
 };
 
 const SETTINGS = {
-  buyBoonsCost: 10, buyBoonsAmount: 2,
+  boonCost: 10,
   turnDurationMs: 30000,
   stockPool: [
     { stocks: 1, multiplier: 2 },

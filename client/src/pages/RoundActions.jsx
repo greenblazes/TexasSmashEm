@@ -335,11 +335,11 @@ function AwaitingNextRound({ match, me }) {
 function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, run, autoOpenModal = true }) {
   const [pendingSelf, setPendingSelf] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const mySubmitted = preBet.sealedBoons[playerId] === true;
+  const mySubmitted = playerId in preBet.sealedBoons;
   const isMyTurn = isParticipant && !mySubmitted;
   const modalOpen = autoOpenModal ? isMyTurn : previewOpen;
   const otherParticipantId = preBet.participants.find((id) => id !== playerId);
-  const otherSubmitted = preBet.sealedBoons[otherParticipantId] === true;
+  const otherSubmitted = otherParticipantId in preBet.sealedBoons;
 
   useEffect(() => {
     if (autoOpenModal && isMyTurn) { playBeep(); vibrate(); }
@@ -372,7 +372,7 @@ function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, r
 
         <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
           {preBet.participants.map((id) => {
-            const submitted = preBet.sealedBoons[id] === true;
+            const submitted = id in preBet.sealedBoons;
             return (
               <div key={id} style={{
                 flex: 1, padding: "8px 12px", borderRadius: "var(--r)",
