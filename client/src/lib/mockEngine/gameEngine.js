@@ -87,6 +87,7 @@ export function setMatchPrediction(lobby, playerId, matchId, predictedWinnerId) 
 }
 
 export function buyBoons(lobby, playerId, quantity = 1) {
+  if (lobby.status === "complete") throw new Error("The tournament is over — boons can no longer be bought");
   const player = lobby.players.find((p) => p.id === playerId);
   if (!player) throw new Error("Player not found");
   const totalCost = lobby.settings.boonCost * quantity;

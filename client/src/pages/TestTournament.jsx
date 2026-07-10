@@ -154,7 +154,7 @@ export default function TestTournament() {
                 <ChipIcon size={22} className="chip-icon" />
                 <span className="chip-value">{me.chips ?? 0}</span>
               </div>
-              {lobby.status !== "waiting" && (
+              {lobby.status === "in_progress" && (
                 <div
                   className="chip-pill boon-pill"
                   role="button"
@@ -170,7 +170,7 @@ export default function TestTournament() {
               <Link to="/">← Back to app</Link>
             </div>
           </div>
-          {lobby.status !== "waiting" && (
+          {lobby.status === "in_progress" && (
             <BoonDrawer
               open={boonDrawerOpen}
               cost={lobby.settings.boonCost}

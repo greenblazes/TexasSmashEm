@@ -127,7 +127,7 @@ export default function Lobby() {
                 <span className="chip-value">{me.chips ?? 0}</span>
               </div>
             )}
-            {me && lobby.status !== "waiting" && (
+            {me && lobby.status === "in_progress" && (
               <div
                 className="chip-pill boon-pill"
                 role="button"
@@ -151,7 +151,7 @@ export default function Lobby() {
             </button>
           </div>
         </div>
-        {me && lobby.status !== "waiting" && (
+        {me && lobby.status === "in_progress" && (
           <BoonDrawer
             open={boonDrawerOpen}
             cost={lobby.settings.boonCost}
