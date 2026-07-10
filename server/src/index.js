@@ -8,6 +8,7 @@ import {
   addPlayer,
   removeLobby,
   listLobbies,
+  MAX_PLAYERS_ALLOWED,
 } from "./lobbyStore.js";
 import {
   startTournament,
@@ -192,6 +193,14 @@ io.on("connection", (socket) => {
     } catch (err) {
       ack?.({ ok: false, error: err.message });
     }
+  });
+
+  socket.on("lobby:checkJoinable", ({ code }, ack) => {
+    const lobby = getLobby(code);
+    if (!lobby) return ack?.({ joinable: false, reason: "This lobby doesn't exist." });
+    if (lobby.status !== "waiting") return ack?.({ joinable: false, reason: "This tournament has already started." });
+    if (lobby.players.length >= MAX_PLAYERS_ALLOWED) return ack?.({ joinable: false, reason: "This lobby is full." });
+    ack?.({ joinable: true });
   });
 
   socket.on("player:join", ({ code, playerName }, ack) => {

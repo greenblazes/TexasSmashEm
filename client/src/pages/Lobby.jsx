@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLobby } from "../lib/LobbyContext.jsx";
 import { emitAck } from "../lib/socket.js";
 import BracketPanel from "../components/BracketPanel.jsx";
@@ -11,6 +11,7 @@ import BoonDrawer from "../components/BoonDrawer.jsx";
 import TPickIcon from "../components/TPickIcon.jsx";
 import QRCode from "../components/QRCode.jsx";
 import JoinLobbyModal from "../components/JoinLobbyModal.jsx";
+import LobbyNotJoinable from "../components/LobbyNotJoinable.jsx";
 import ExitIcon from "../components/ExitIcon.jsx";
 import ExitConfirmModal from "../components/ExitConfirmModal.jsx";
 import RoundActions from "./RoundActions.jsx";
@@ -51,12 +52,22 @@ export default function Lobby() {
   const navigate = useNavigate();
   const [boonDrawerOpen, setBoonDrawerOpen] = useState(false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  const [joinability, setJoinability] = useState(null); // null = checking, else { joinable, reason }
 
   async function handleJoinAsNewPlayer(name) {
     return joinLobby(code, name);
   }
 
-  if (!rejoinAttempted) {
+  useEffect(() => {
+    if (lobby || !rejoinAttempted) return;
+    let cancelled = false;
+    emitAck("lobby:checkJoinable", { code }).then((res) => {
+      if (!cancelled) setJoinability(res);
+    });
+    return () => { cancelled = true; };
+  }, [lobby, rejoinAttempted, code]);
+
+  if (!rejoinAttempted || (!lobby && !joinability)) {
     return (
       <div className="page">
         <p>Loading lobby…</p>
@@ -65,10 +76,12 @@ export default function Lobby() {
   }
 
   if (!lobby) {
-    // No active session for this lobby — most likely someone scanned the
-    // host's QR code or opened a shared link directly, so they haven't had
-    // a chance to give their name yet. Ask for it here instead of bouncing
-    // them to the home page.
+    if (!joinability.joinable) {
+      return <LobbyNotJoinable reason={joinability.reason} />;
+    }
+    // Lobby is joinable but this browser has no active session for it —
+    // most likely someone scanned the host's QR code or opened a shared
+    // link directly, so they haven't had a chance to give their name yet.
     return <JoinLobbyModal code={code} onJoin={handleJoinAsNewPlayer} error={error} />;
   }
 
