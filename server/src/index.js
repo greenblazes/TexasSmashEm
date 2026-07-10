@@ -17,6 +17,7 @@ import {
   revealAndStartSpectators,
   advanceSpectatorTurn,
   spectatorDone,
+  forceSkipTurn,
   setTexasTPick,
   setMatchPrediction,
   buyBoons,
@@ -388,6 +389,26 @@ io.on("connection", (socket) => {
       clearTurnTimer(matchId);
       spectatorDone(lobby, matchId, playerId);
       scheduleTurnTimer(code, matchId);
+      ack?.({ ok: true });
+      broadcastLobby(code);
+    } catch (err) {
+      ack?.({ ok: false, error: err.message });
+    }
+  });
+
+  socket.on("host:forceSkipTurn", ({ code, playerId, matchId }, ack) => {
+    try {
+      const lobby = getLobby(code);
+      requireHost(lobby, playerId);
+      const { phase, allDone } = forceSkipTurn(lobby, matchId);
+      if (phase === "participants" && allDone) {
+        clearTurnTimer(matchId);
+        revealAndStartSpectators(lobby, matchId);
+        scheduleTurnTimer(code, matchId);
+      } else if (phase === "spectators") {
+        clearTurnTimer(matchId);
+        scheduleTurnTimer(code, matchId);
+      }
       ack?.({ ok: true });
       broadcastLobby(code);
     } catch (err) {

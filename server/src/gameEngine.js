@@ -196,6 +196,29 @@ export function spectatorDone(lobby, matchId, playerId) {
   return advanceSpectatorTurn(lobby, matchId);
 }
 
+// Host-only escape hatch for a player who has walked away mid-turn: skips them
+// with no boons/bet placed rather than leaving the tournament stuck waiting.
+// Returns { phase, allDone } so the caller knows whether to reveal spectators
+// (participants phase) or the match is now ready to start (spectators phase).
+export function forceSkipTurn(lobby, matchId) {
+  const preBet = lobby.matchPreBet[matchId];
+  if (!preBet) throw new Error("No active pre-match betting for this match");
+
+  if (preBet.phase === "participants") {
+    const pendingId = preBet.participants.find((id) => !(id in preBet.sealedBoons));
+    if (!pendingId) throw new Error("No pending participant to skip");
+    const allDone = submitParticipantBoons(lobby, matchId, pendingId, 0);
+    return { phase: "participants", allDone };
+  }
+
+  if (preBet.phase === "spectators") {
+    const allDone = advanceSpectatorTurn(lobby, matchId);
+    return { phase: "spectators", allDone };
+  }
+
+  throw new Error("No active turn to skip");
+}
+
 // ── Match start ───────────────────────────────────────────────────────────────
 
 export function startMatch(lobby, matchId) {

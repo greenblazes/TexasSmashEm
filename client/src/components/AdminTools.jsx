@@ -9,6 +9,12 @@ export default function AdminTools({ lobby, playerId }) {
     if (!res.ok) alert(res.error);
   }
 
+  async function forceSkipTurn(matchId, stuckName) {
+    if (!confirm(`Force-skip ${stuckName}'s turn? They'll be treated as placing no boons/bet.`)) return;
+    const res = await emitAck("host:forceSkipTurn", { code: lobby.code, playerId, matchId });
+    if (!res.ok) alert(res.error);
+  }
+
   async function nextRound() {
     const res = await emitAck("host:nextRound", { code: lobby.code, playerId });
     if (!res.ok) alert(res.error);
@@ -56,25 +62,38 @@ export default function AdminTools({ lobby, playerId }) {
                   : phase === "participants" ? "Sealed boon phase"
                   : phase === "spectators" ? `Spectator turn ${(preBet.currentTurnIdx ?? 0) + 1} of ${preBet.spectatorOrder.length}`
                   : "Betting closed";
+                const stuckPlayerId =
+                  phase === "participants" ? preBet.participants.find((id) => !(id in preBet.sealedBoons))
+                  : phase === "spectators" ? preBet.spectatorOrder[preBet.currentTurnIdx]
+                  : null;
+                const stuckName = lobby.players.find((p) => p.id === stuckPlayerId)?.name;
                 return (
-                  <div key={m.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div key={m.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)", gap: 10, flexWrap: "wrap" }}>
                     <div>
                       <div style={{ color: "var(--text)", fontWeight: 500 }}>
                         {m.playerAName} <span style={{ color: "var(--text-dim)" }}>vs</span> {m.playerBName}
                       </div>
                       <div style={{ fontSize: "0.7rem", color: canStart ? "var(--green)" : "var(--gold)", marginTop: 2 }}>
                         {phaseLabel}
+                        {stuckName && <span style={{ color: "var(--text-dim)" }}> — waiting on {stuckName}</span>}
                       </div>
                     </div>
-                    {needsNextRound ? (
-                      <button className="btn-gold" onClick={nextRound}>
-                        Next Round
-                      </button>
-                    ) : (
-                      <button className="btn-gold" onClick={() => startMatch(m.id)} disabled={!canStart} style={{ opacity: canStart ? 1 : 0.4, cursor: canStart ? "pointer" : "not-allowed" }}>
-                        Start Match
-                      </button>
-                    )}
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {stuckPlayerId && (
+                        <button onClick={() => forceSkipTurn(m.id, stuckName)} style={{ fontSize: "0.75rem" }}>
+                          Force Skip {stuckName}
+                        </button>
+                      )}
+                      {needsNextRound ? (
+                        <button className="btn-gold" onClick={nextRound}>
+                          Next Round
+                        </button>
+                      ) : (
+                        <button className="btn-gold" onClick={() => startMatch(m.id)} disabled={!canStart} style={{ opacity: canStart ? 1 : 0.4, cursor: canStart ? "pointer" : "not-allowed" }}>
+                          Start Match
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
