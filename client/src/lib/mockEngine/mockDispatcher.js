@@ -141,6 +141,19 @@ export function createMockDispatcher({ getLobby, onChange }) {
           result = { ok: true };
           break;
         }
+        case "host:forceSkipTurn": {
+          const { phase, allDone } = engine.forceSkipTurn(lobby, matchId);
+          if (phase === "participants" && allDone) {
+            clearTurnTimer(matchId);
+            engine.revealAndStartSpectators(lobby, matchId);
+            scheduleTurnTimer(matchId);
+          } else if (phase === "spectators") {
+            clearTurnTimer(matchId);
+            scheduleTurnTimer(matchId);
+          }
+          result = { ok: true };
+          break;
+        }
         default:
           result = { ok: false, error: `Unhandled mock event: ${event}` };
       }

@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLobby } from "../lib/LobbyContext.jsx";
 import { emitAck } from "../lib/socket.js";
 import BracketPanel from "../components/BracketPanel.jsx";
@@ -8,9 +8,12 @@ import ChipIcon from "../components/ChipIcon.jsx";
 import BoonIcon from "../components/BoonIcon.jsx";
 import PotIcon from "../components/PotIcon.jsx";
 import BoonDrawer from "../components/BoonDrawer.jsx";
+import TrumpIcon from "../components/TrumpIcon.jsx";
+import TrumpCardDrawer from "../components/TrumpCardDrawer.jsx";
 import TPickIcon from "../components/TPickIcon.jsx";
 import QRCode from "../components/QRCode.jsx";
 import JoinLobbyModal from "../components/JoinLobbyModal.jsx";
+import LobbyNotJoinable from "../components/LobbyNotJoinable.jsx";
 import ExitIcon from "../components/ExitIcon.jsx";
 import ExitConfirmModal from "../components/ExitConfirmModal.jsx";
 import RoundActions from "./RoundActions.jsx";
@@ -50,13 +53,24 @@ export default function Lobby() {
   const { lobby, me, playerId, isHost, leaveSession, joinLobby, rejoinAttempted, error } = useLobby();
   const navigate = useNavigate();
   const [boonDrawerOpen, setBoonDrawerOpen] = useState(false);
+  const [trumpDrawerOpen, setTrumpDrawerOpen] = useState(false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  const [joinability, setJoinability] = useState(null); // null = checking, else { joinable, reason }
 
   async function handleJoinAsNewPlayer(name) {
     return joinLobby(code, name);
   }
 
-  if (!rejoinAttempted) {
+  useEffect(() => {
+    if (lobby || !rejoinAttempted) return;
+    let cancelled = false;
+    emitAck("lobby:checkJoinable", { code }).then((res) => {
+      if (!cancelled) setJoinability(res);
+    });
+    return () => { cancelled = true; };
+  }, [lobby, rejoinAttempted, code]);
+
+  if (!rejoinAttempted || (!lobby && !joinability)) {
     return (
       <div className="page">
         <p>Loading lobby…</p>
@@ -65,10 +79,12 @@ export default function Lobby() {
   }
 
   if (!lobby) {
-    // No active session for this lobby — most likely someone scanned the
-    // host's QR code or opened a shared link directly, so they haven't had
-    // a chance to give their name yet. Ask for it here instead of bouncing
-    // them to the home page.
+    if (!joinability.joinable) {
+      return <LobbyNotJoinable reason={joinability.reason} />;
+    }
+    // Lobby is joinable but this browser has no active session for it —
+    // most likely someone scanned the host's QR code or opened a shared
+    // link directly, so they haven't had a chance to give their name yet.
     return <JoinLobbyModal code={code} onJoin={handleJoinAsNewPlayer} error={error} />;
   }
 
@@ -87,8 +103,22 @@ export default function Lobby() {
     return res;
   }
 
+  async function handlePlayTrumpCard(targetParticipantId) {
+    const res = await emitAck("player:playTrumpCard", { code: lobby.code, playerId, matchId: trumpMatch.id, targetParticipantId });
+    if (res.ok) setTrumpDrawerOpen(false);
+    return res;
+  }
+
   const totalPlayers = lobby.players.length;
   const picksDone = lobby.players.filter(p => p.texasTPick).length;
+
+  // Trump Card can only be played before the current match starts, and only
+  // by someone who isn't one of its two participants.
+  const trumpMatch = lobby.bracket?.rounds.flat().find((m) => m.status === "ready") || null;
+  const canPlayTrump = !!(
+    me?.hasTrumpCard && trumpMatch &&
+    trumpMatch.playerA !== playerId && trumpMatch.playerB !== playerId
+  );
 
   return (
     <div className="page">
@@ -114,7 +144,7 @@ export default function Lobby() {
                 <span className="chip-value">{me.chips ?? 0}</span>
               </div>
             )}
-            {me && lobby.status !== "waiting" && (
+            {me && lobby.status === "in_progress" && (
               <div
                 className="chip-pill boon-pill"
                 role="button"
@@ -125,6 +155,19 @@ export default function Lobby() {
               >
                 <BoonIcon size={22} className="chip-icon" />
                 <span className="chip-value">{me.boons ?? 0}</span>
+              </div>
+            )}
+            {canPlayTrump && (
+              <div
+                className="chip-pill trump-pill"
+                role="button"
+                tabIndex={0}
+                onClick={() => setTrumpDrawerOpen((o) => !o)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setTrumpDrawerOpen((o) => !o); }}
+                style={{ cursor: "pointer" }}
+                title="Play Trump Card"
+              >
+                <TrumpIcon size={22} />
               </div>
             )}
             <button
@@ -138,12 +181,19 @@ export default function Lobby() {
             </button>
           </div>
         </div>
-        {me && lobby.status !== "waiting" && (
+        {me && lobby.status === "in_progress" && (
           <BoonDrawer
             open={boonDrawerOpen}
             cost={lobby.settings.boonCost}
             chips={me.chips ?? 0}
             onBuy={handleBuyBoon}
+          />
+        )}
+        {canPlayTrump && (
+          <TrumpCardDrawer
+            open={trumpDrawerOpen}
+            match={trumpMatch}
+            onPlay={handlePlayTrumpCard}
           />
         )}
       </div>
@@ -221,7 +271,7 @@ export default function Lobby() {
         </div>
       )}
 
-      {lobby.status !== "waiting" && (
+      {lobby.status === "in_progress" && (
         <div>
           {lobby.status === "complete" && lobby.champion && (
             <div className="card card-gold" style={{ textAlign: "center", padding: "24px 22px" }}>

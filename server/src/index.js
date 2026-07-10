@@ -8,6 +8,7 @@ import {
   addPlayer,
   removeLobby,
   listLobbies,
+  MAX_PLAYERS_ALLOWED,
 } from "./lobbyStore.js";
 import {
   startTournament,
@@ -17,6 +18,7 @@ import {
   revealAndStartSpectators,
   advanceSpectatorTurn,
   spectatorDone,
+  forceSkipTurn,
   setTexasTPick,
   setMatchPrediction,
   buyBoons,
@@ -191,6 +193,14 @@ io.on("connection", (socket) => {
     } catch (err) {
       ack?.({ ok: false, error: err.message });
     }
+  });
+
+  socket.on("lobby:checkJoinable", ({ code }, ack) => {
+    const lobby = getLobby(code);
+    if (!lobby) return ack?.({ joinable: false, reason: "This lobby doesn't exist." });
+    if (lobby.status !== "waiting") return ack?.({ joinable: false, reason: "This tournament has already started." });
+    if (lobby.players.length >= MAX_PLAYERS_ALLOWED) return ack?.({ joinable: false, reason: "This lobby is full." });
+    ack?.({ joinable: true });
   });
 
   socket.on("player:join", ({ code, playerName }, ack) => {
@@ -388,6 +398,26 @@ io.on("connection", (socket) => {
       clearTurnTimer(matchId);
       spectatorDone(lobby, matchId, playerId);
       scheduleTurnTimer(code, matchId);
+      ack?.({ ok: true });
+      broadcastLobby(code);
+    } catch (err) {
+      ack?.({ ok: false, error: err.message });
+    }
+  });
+
+  socket.on("host:forceSkipTurn", ({ code, playerId, matchId }, ack) => {
+    try {
+      const lobby = getLobby(code);
+      requireHost(lobby, playerId);
+      const { phase, allDone } = forceSkipTurn(lobby, matchId);
+      if (phase === "participants" && allDone) {
+        clearTurnTimer(matchId);
+        revealAndStartSpectators(lobby, matchId);
+        scheduleTurnTimer(code, matchId);
+      } else if (phase === "spectators") {
+        clearTurnTimer(matchId);
+        scheduleTurnTimer(code, matchId);
+      }
       ack?.({ ok: true });
       broadcastLobby(code);
     } catch (err) {

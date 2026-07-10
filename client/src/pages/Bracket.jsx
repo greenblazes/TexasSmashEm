@@ -1,3 +1,5 @@
+import { roundLabel } from "../lib/roundLabel.js";
+
 export default function Bracket({ bracket, highlightPlayerId }) {
   if (!bracket) return null;
 
@@ -43,10 +45,3 @@ function matchSlotClass(match, slot, highlightPlayerId) {
   return classes.join(" ");
 }
 
-function roundLabel(idx, total) {
-  const remaining = total - idx;
-  if (remaining === 1) return "Final";
-  if (remaining === 2) return "Semifinals";
-  if (remaining === 3) return "Quarterfinals";
-  return `Round ${idx + 1}`;
-}
