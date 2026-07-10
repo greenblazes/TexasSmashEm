@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { emitAck } from "../lib/socket.js";
 import { matchHandicap, boonHandicapPercent } from "../lib/economy.js";
-import TrumpIcon from "../components/TrumpIcon.jsx";
+import { roundLabel } from "../lib/roundLabel.js";
 import TPickIcon from "../components/TPickIcon.jsx";
 import stockBetImg from "../assets/icons/stockbet.png";
 import matchPickIcon from "../assets/icons/match-prediction.png";
@@ -225,23 +225,27 @@ export default function RoundActions({ lobby, me, playerId, autoOpenModal = true
       {allActiveMatches.map((match) => {
         const preBet = lobby.matchPreBet?.[match.id];
         const isParticipant = match.playerA === playerId || match.playerB === playerId;
-
-        if (match.status === "in_progress") {
-          return <MatchLocked key={match.id} match={match} lobby={lobby} isParticipant={isParticipant} me={me} playerId={playerId} />;
-        }
+        const label = roundLabel(match.round - 1, lobby.bracket.rounds.length);
+        const isGrandFinal = label === "Grand Final";
 
         return (
-          <MatchPreBet
-            key={match.id}
-            lobby={lobby}
-            match={match}
-            preBet={preBet}
-            me={me}
-            playerId={playerId}
-            isParticipant={isParticipant}
-            run={run}
-            autoOpenModal={autoOpenModal}
-          />
+          <div key={match.id} className={isGrandFinal ? "grand-final-wrap" : undefined}>
+            <RoundBanner label={label} isGrandFinal={isGrandFinal} />
+            {match.status === "in_progress" ? (
+              <MatchLocked match={match} lobby={lobby} isParticipant={isParticipant} me={me} playerId={playerId} />
+            ) : (
+              <MatchPreBet
+                lobby={lobby}
+                match={match}
+                preBet={preBet}
+                me={me}
+                playerId={playerId}
+                isParticipant={isParticipant}
+                run={run}
+                autoOpenModal={autoOpenModal}
+              />
+            )}
+          </div>
         );
       })}
 
@@ -254,6 +258,23 @@ export default function RoundActions({ lobby, me, playerId, autoOpenModal = true
           <p>Your predicted champion: <strong style={{ color: "var(--text)" }}>{playerName(lobby, me.texasTPick)}</strong></p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Round name banner shown above each active match card ───────────────────────
+
+function RoundBanner({ label, isGrandFinal }) {
+  if (isGrandFinal) {
+    return (
+      <div className="grand-final-banner">
+        <span>🏆 {label} 🏆</span>
+      </div>
+    );
+  }
+  return (
+    <div style={{ fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-dim)", marginBottom: 6, paddingLeft: 2 }}>
+      {label}
     </div>
   );
 }
@@ -442,8 +463,6 @@ function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, r
             {previewOpen ? "Hide Popup Preview" : "Preview Popup"}
           </button>
         )}
-
-        <TrumpCardButton match={match} me={me} playerId={playerId} run={run} />
       </div>
 
       {/* Modal — only when it's this participant's turn (or manually previewed) */}
@@ -628,8 +647,6 @@ function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run
             {previewOpen ? "Hide Popup Preview" : "Preview Popup"}
           </button>
         )}
-
-        <TrumpCardButton match={match} me={me} playerId={playerId} run={(e, p) => emitAck(e, { code: lobby.code, playerId, ...p })} />
       </div>
 
       {/* Betting modal — only when it's this spectator's turn (or manually previewed) */}
@@ -819,25 +836,6 @@ function PreBetComplete({ lobby, match, preBet, me, playerId, isParticipant, run
       <p style={{ fontSize: "0.82rem", color: "var(--text-dim)", marginTop: 10 }}>
         Betting is closed. Waiting for the host to start the match.
       </p>
-
-      <TrumpCardButton match={match} me={me} playerId={playerId} run={run} />
-    </div>
-  );
-}
-
-// ── Trump Card ────────────────────────────────────────────────────────────────
-
-function TrumpCardButton({ match, me, playerId, run }) {
-  if (!me.hasTrumpCard) return null;
-  const isParticipant = match.playerA === playerId || match.playerB === playerId;
-  if (isParticipant) return null;
-  return (
-    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border-gold)" }}>
-      <span className="field-label" style={{ display: "block", marginBottom: 8 }}><TrumpIcon size={16} style={{ marginRight: 6 }} />Play Trump Card — clear all boons on:</span>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button className="btn-gold" onClick={() => run("player:playTrumpCard", { matchId: match.id, targetParticipantId: match.playerA })}>{match.playerAName}</button>
-        <button className="btn-gold" onClick={() => run("player:playTrumpCard", { matchId: match.id, targetParticipantId: match.playerB })}>{match.playerBName}</button>
-      </div>
     </div>
   );
 }
