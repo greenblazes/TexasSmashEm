@@ -113,10 +113,13 @@ export default function Lobby() {
   const picksDone = lobby.players.filter(p => p.texasTPick).length;
 
   // Trump Card can only be played before the current match starts, and only
-  // by someone who isn't one of its two participants.
+  // by someone who isn't one of its two participants. Once a match is
+  // in_progress there's no "ready" match yet, so trumpMatch is null and the
+  // pill goes into its disabled state rather than disappearing.
+  const hasTrumpCard = !!me?.hasTrumpCard;
   const trumpMatch = lobby.bracket?.rounds.flat().find((m) => m.status === "ready") || null;
   const canPlayTrump = !!(
-    me?.hasTrumpCard && trumpMatch &&
+    hasTrumpCard && trumpMatch &&
     trumpMatch.playerA !== playerId && trumpMatch.playerB !== playerId
   );
 
@@ -157,15 +160,16 @@ export default function Lobby() {
                 <span className="chip-value">{me.boons ?? 0}</span>
               </div>
             )}
-            {canPlayTrump && (
+            {hasTrumpCard && (
               <div
                 className="chip-pill trump-pill"
                 role="button"
-                tabIndex={0}
-                onClick={() => setTrumpDrawerOpen((o) => !o)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setTrumpDrawerOpen((o) => !o); }}
-                style={{ cursor: "pointer" }}
-                title="Play Trump Card"
+                tabIndex={canPlayTrump ? 0 : -1}
+                aria-disabled={!canPlayTrump}
+                onClick={() => canPlayTrump && setTrumpDrawerOpen((o) => !o)}
+                onKeyDown={(e) => { if (canPlayTrump && (e.key === "Enter" || e.key === " ")) setTrumpDrawerOpen((o) => !o); }}
+                style={{ cursor: canPlayTrump ? "pointer" : "not-allowed", opacity: canPlayTrump ? 1 : 0.45 }}
+                title={canPlayTrump ? "Play Trump Card" : "Trump Card can't be played while a match is in progress"}
               >
                 <TrumpIcon size={22} />
               </div>

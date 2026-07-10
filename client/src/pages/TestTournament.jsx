@@ -131,9 +131,10 @@ export default function TestTournament() {
   const me = lobby.players.find((p) => p.id === viewAsId) || lobby.players[0];
   const hostId = lobby.hostPlayerId;
 
+  const hasTrumpCard = !!me?.hasTrumpCard;
   const trumpMatch = lobby.bracket?.rounds.flat().find((m) => m.status === "ready") || null;
   const canPlayTrump = !!(
-    me?.hasTrumpCard && trumpMatch &&
+    hasTrumpCard && trumpMatch &&
     trumpMatch.playerA !== viewAsId && trumpMatch.playerB !== viewAsId
   );
 
@@ -182,15 +183,16 @@ export default function TestTournament() {
                   <span className="chip-value">{me.boons ?? 0}</span>
                 </div>
               )}
-              {canPlayTrump && (
+              {hasTrumpCard && (
                 <div
                   className="chip-pill trump-pill"
                   role="button"
-                  tabIndex={0}
-                  onClick={() => setTrumpDrawerOpen((o) => !o)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setTrumpDrawerOpen((o) => !o); }}
-                  style={{ cursor: "pointer" }}
-                  title="Play Trump Card"
+                  tabIndex={canPlayTrump ? 0 : -1}
+                  aria-disabled={!canPlayTrump}
+                  onClick={() => canPlayTrump && setTrumpDrawerOpen((o) => !o)}
+                  onKeyDown={(e) => { if (canPlayTrump && (e.key === "Enter" || e.key === " ")) setTrumpDrawerOpen((o) => !o); }}
+                  style={{ cursor: canPlayTrump ? "pointer" : "not-allowed", opacity: canPlayTrump ? 1 : 0.45 }}
+                  title={canPlayTrump ? "Play Trump Card" : "Trump Card can't be played while a match is in progress"}
                 >
                   <TrumpIcon size={22} />
                 </div>
