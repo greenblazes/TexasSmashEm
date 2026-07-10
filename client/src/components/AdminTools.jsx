@@ -112,10 +112,10 @@ export default function AdminTools({ lobby, playerId }) {
             </div>
           )}
 
-          <div className="card">
+          {/* <div className="card">
             <span className="section-label">Full Bracket</span>
             <Bracket bracket={lobby.bracket} />
-          </div>
+          </div> */}
         </>
       )}
 
