@@ -1174,3 +1174,12 @@ details.card form { margin-top: 14px; }
 .scoreboard-details {
   padding: 0 14px 14px;
 }
+
+.scoreboard-bonuses-expanded {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 0 16px;
+}

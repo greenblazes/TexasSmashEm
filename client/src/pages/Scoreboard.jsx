@@ -26,11 +26,13 @@ export default function Scoreboard({ lobby }) {
                 <span className="scoreboard-name">
                   {player.name}{player.isHost ? " (Host)" : ""}
                 </span>
-                <span className="scoreboard-bonuses">
-                  {(player.bonusHistory || []).map((type, i) => (
-                    <BonusIcon key={i} type={type} size={24} />
-                  ))}
-                </span>
+                {!expanded && (
+                  <span className="scoreboard-bonuses">
+                    {(player.bonusHistory || []).map((type, i) => (
+                      <BonusIcon key={i} type={type} size={24} />
+                    ))}
+                  </span>
+                )}
                 <span className="scoreboard-chips">
                   <ChipIcon size={18} />
                   {player.chips}
@@ -40,6 +42,13 @@ export default function Scoreboard({ lobby }) {
 
               {expanded && (
                 <div className="scoreboard-details">
+                  {(player.bonusHistory || []).length > 0 && (
+                    <div className="scoreboard-bonuses-expanded">
+                      {player.bonusHistory.map((type, i) => (
+                        <BonusIcon key={i} type={type} size={44} />
+                      ))}
+                    </div>
+                  )}
                   <div className="stat-grid">
                     <div className="stat-tile">
                       <div className="stat-value" style={{ color: "var(--blue-light)" }}>{player.boonsPlaced ?? 0}</div>
