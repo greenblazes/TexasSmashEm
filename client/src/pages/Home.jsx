@@ -63,6 +63,7 @@ export default function Home() {
                 placeholder="Enter your tag"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
+                maxLength={10}
                 required
               />
             </div>
@@ -81,6 +82,7 @@ export default function Home() {
                 placeholder="Enter your tag"
                 value={hostName}
                 onChange={(e) => setHostName(e.target.value)}
+                maxLength={10}
                 required
               />
             </div>

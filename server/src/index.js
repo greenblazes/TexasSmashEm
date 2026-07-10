@@ -184,6 +184,7 @@ io.on("connection", (socket) => {
   socket.on("host:create", ({ hostName }, ack) => {
     try {
       if (!hostName || !hostName.trim()) throw new Error("Host name required");
+      if (hostName.trim().length > 10) throw new Error("Name must be 10 characters or fewer");
       const lobby = createLobby(hostName.trim());
       const player = lobby.players[0];
       player.socketId = socket.id;
@@ -206,6 +207,7 @@ io.on("connection", (socket) => {
   socket.on("player:join", ({ code, playerName }, ack) => {
     try {
       if (!playerName || !playerName.trim()) throw new Error("Name required");
+      if (playerName.trim().length > 10) throw new Error("Name must be 10 characters or fewer");
       const { lobby, player } = addPlayer(code, playerName.trim());
       player.socketId = socket.id;
       socket.join(roomName(lobby.code));
