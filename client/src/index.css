@@ -573,6 +573,12 @@ select {
   filter: brightness(1.15);
 }
 
+/* Bracket and Rules panels go full-width; Admin panel keeps the default
+   compact width — applied to both the panel and its matching tab so the
+   tab's open-state offset (left/right: var(--side-panel-width)) still lines
+   up with the panel's actual edge. */
+.side-panel-full { --side-panel-width: 100vw; }
+
 .side-panel-blue { border-left-color: var(--border-blue); }
 .side-panel-blue.is-open { box-shadow: -8px 0 40px rgba(0,0,0,0.6); }
 
@@ -653,7 +659,7 @@ select {
 }
 
 .vs-name {
-  font-family: var(--font-d); font-size: 1.05rem;
+  font-family: var(--font-d); font-size: 1.2rem;
   letter-spacing: 0.07em; text-transform: uppercase; flex: 1;
 }
 .vs-name:last-of-type { text-align: right; }

@@ -179,7 +179,7 @@ export default function RulesPanel() {
       )}
 
       <div
-        className={`side-panel side-panel-right ${open ? "is-open" : ""} ${isActive ? "side-panel-z-active" : "side-panel-z-inactive"}`}
+        className={`side-panel side-panel-right side-panel-full ${open ? "is-open" : ""} ${isActive ? "side-panel-z-active" : "side-panel-z-inactive"}`}
       >
         <div className="side-panel-header">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -257,7 +257,7 @@ export default function RulesPanel() {
 
       <button
         onClick={handleToggle}
-        className={`side-panel-tab side-panel-tab-right ${open ? "is-open" : ""} ${isActive ? "side-panel-tab-z-active" : "side-panel-tab-z-inactive"}`}
+        className={`side-panel-tab side-panel-tab-right side-panel-full ${open ? "is-open" : ""} ${isActive ? "side-panel-tab-z-active" : "side-panel-tab-z-inactive"}`}
       >
         RULES
       </button>
