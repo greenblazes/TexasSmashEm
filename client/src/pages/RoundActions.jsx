@@ -513,6 +513,7 @@ function ParticipantPhase({ lobby, match, preBet, me, playerId, isParticipant, r
 // ── Spectator turn phase ──────────────────────────────────────────────────────
 
 function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run, autoOpenModal = true }) {
+  const handicap = matchHandicap(lobby, match);
   const [boonsA, setBoonsA] = useState(0);
   const [boonsB, setBoonsB] = useState(0);
   const [prediction, setPrediction] = useState(me.matchPredictions?.[match.id] || "");
@@ -588,6 +589,28 @@ function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run
           <span className="vs-sep">VS</span>
           <span className="vs-name" style={{ color: "var(--green)" }}>{match.playerBName}</span>
         </div>
+
+        <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+          {[
+            { name: match.playerAName, count: handicap.aBoons, color: "var(--blue-light)" },
+            { name: match.playerBName, count: handicap.bBoons, color: "var(--green)" },
+          ].map(({ name, count, color }) => (
+            <div key={name} style={{ flex: 1, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "10px 12px", textAlign: "center" }}>
+              <div style={{ fontSize: "0.72rem", color, fontWeight: 700, marginBottom: 5 }}>{name}</div>
+              <div className="modal-player-boons">
+                {count > 0
+                  ? Array.from({ length: count }).map((_, i) => <span key={i} className="boon-pip" />)
+                  : <span className="boon-count" style={{ fontSize: "0.72rem", color: "var(--text-dim)" }}>no boons</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {handicap.percent > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <HandicapBadge percent={handicap.percent} name={lobby.players.find((p) => p.id === handicap.handicappedPlayerId)?.name} />
+          </div>
+        )}
 
         {/* Turn queue */}
         <div style={{ marginBottom: 12 }}>
