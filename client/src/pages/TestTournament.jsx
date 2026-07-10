@@ -17,6 +17,8 @@ import ChipIcon from "../components/ChipIcon.jsx";
 import BoonIcon from "../components/BoonIcon.jsx";
 import PotIcon from "../components/PotIcon.jsx";
 import BoonDrawer from "../components/BoonDrawer.jsx";
+import TrumpIcon from "../components/TrumpIcon.jsx";
+import TrumpCardDrawer from "../components/TrumpCardDrawer.jsx";
 import { RewardPopup } from "../components/RewardPopups.jsx";
 import RoundActions from "./RoundActions.jsx";
 import BracketPanel from "../components/BracketPanel.jsx";
@@ -55,6 +57,7 @@ export default function TestTournament() {
   const [, setTick] = useState(0);
   const [viewAsId, setViewAsId] = useState(lobbyRef.current.hostPlayerId);
   const [boonDrawerOpen, setBoonDrawerOpen] = useState(false);
+  const [trumpDrawerOpen, setTrumpDrawerOpen] = useState(false);
   const [log, setLog] = useState([]);
   const [rewards, setRewards] = useState([]);
   const [stocksInput, setStocksInput] = useState(2);
@@ -128,6 +131,18 @@ export default function TestTournament() {
   const me = lobby.players.find((p) => p.id === viewAsId) || lobby.players[0];
   const hostId = lobby.hostPlayerId;
 
+  const trumpMatch = lobby.bracket?.rounds.flat().find((m) => m.status === "ready") || null;
+  const canPlayTrump = !!(
+    me?.hasTrumpCard && trumpMatch &&
+    trumpMatch.playerA !== viewAsId && trumpMatch.playerB !== viewAsId
+  );
+
+  async function handlePlayTrumpCard(targetParticipantId) {
+    const res = await emitAck("player:playTrumpCard", { code: lobby.code, playerId: viewAsId, matchId: trumpMatch.id, targetParticipantId });
+    if (res.ok) setTrumpDrawerOpen(false);
+    return res;
+  }
+
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       {rewards.map((r, i) => (
@@ -167,6 +182,19 @@ export default function TestTournament() {
                   <span className="chip-value">{me.boons ?? 0}</span>
                 </div>
               )}
+              {canPlayTrump && (
+                <div
+                  className="chip-pill trump-pill"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setTrumpDrawerOpen((o) => !o)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setTrumpDrawerOpen((o) => !o); }}
+                  style={{ cursor: "pointer" }}
+                  title="Play Trump Card"
+                >
+                  <TrumpIcon size={22} />
+                </div>
+              )}
               <Link to="/">← Back to app</Link>
             </div>
           </div>
@@ -176,6 +204,13 @@ export default function TestTournament() {
               cost={lobby.settings.boonCost}
               chips={me.chips ?? 0}
               onBuy={() => emitAck("player:buyBoons", { code: lobby.code, playerId: viewAsId, quantity: 1 })}
+            />
+          )}
+          {canPlayTrump && (
+            <TrumpCardDrawer
+              open={trumpDrawerOpen}
+              match={trumpMatch}
+              onPlay={handlePlayTrumpCard}
             />
           )}
         </div>

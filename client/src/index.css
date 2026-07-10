@@ -1043,7 +1043,7 @@ details.card form { margin-top: 14px; }
   align-items: center;
   gap: 2px;
   transform: translate(-50%, -50%);
-  animation: reward-fly 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: reward-fly 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   will-change: transform, opacity;
 }
 
@@ -1068,8 +1068,8 @@ details.card form { margin-top: 14px; }
 
 @keyframes reward-fly {
   0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-  14%  { transform: translate(-50%, -50%) scale(1.18); opacity: 1; }
-  24%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  8%  { transform: translate(-50%, -50%) scale(1.18); opacity: 1; }
+  16%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   62%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   100% {
     transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, -300px))) scale(0.1);
