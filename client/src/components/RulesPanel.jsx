@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { onOpenRuleRequest } from "../lib/rulesPanelBridge.js";
 import chipIcon from "../assets/icons/chip.png";
 import boonIcon from "../assets/icons/boon.png";
@@ -126,19 +126,36 @@ export default function RulesPanel() {
   // is driven directly by this panel's own open state, not shared/global
   // state, so it can never end up stuck behind a panel that isn't showing.
   const isActive = open;
+  const ruleRefs = useRef({});
+  const [pendingScrollKey, setPendingScrollKey] = useState(null);
 
   useEffect(() => {
     return onOpenRuleRequest((ruleTitle) => {
       for (const section of SECTIONS) {
         const idx = section.rules.findIndex((r) => r.title === ruleTitle);
         if (idx !== -1) {
-          setExpanded(section.heading + idx);
+          const key = section.heading + idx;
+          setExpanded(key);
           setOpen(true);
+          setPendingScrollKey(key);
           return;
         }
       }
     });
   }, []);
+
+  // Scroll the opened rule into view once the panel has finished animating
+  // open — the side-panel-body isn't at its final size/scroll position
+  // immediately after `open` flips true, so scrollIntoView run too early
+  // can land in the wrong spot.
+  useEffect(() => {
+    if (!pendingScrollKey) return;
+    const timer = setTimeout(() => {
+      ruleRefs.current[pendingScrollKey]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setPendingScrollKey(null);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [pendingScrollKey]);
 
   function toggleRule(idx) {
     setExpanded(expanded === idx ? null : idx);
@@ -195,7 +212,7 @@ export default function RulesPanel() {
               {section.rules.map((rule, idx) => {
                 const key = section.heading + idx;
                 return (
-                  <div key={key} style={{ borderBottom: "1px solid var(--border)" }}>
+                  <div key={key} ref={(el) => { ruleRefs.current[key] = el; }} style={{ borderBottom: "1px solid var(--border)" }}>
                     <button
                       onClick={() => toggleRule(key)}
                       style={{
