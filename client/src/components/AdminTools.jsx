@@ -63,7 +63,7 @@ export default function AdminTools({ lobby, playerId }) {
                   : phase === "spectators" ? `Spectator turn ${(preBet.currentTurnIdx ?? 0) + 1} of ${preBet.spectatorOrder.length}`
                   : "Betting closed";
                 const stuckPlayerId =
-                  phase === "participants" ? preBet.participants.find((id) => !(id in preBet.sealedBoons))
+                  phase === "participants" ? preBet.participants.find((id) => preBet.sealedBoons[id] !== true)
                   : phase === "spectators" ? preBet.spectatorOrder[preBet.currentTurnIdx]
                   : null;
                 const stuckName = lobby.players.find((p) => p.id === stuckPlayerId)?.name;
