@@ -596,7 +596,7 @@ function SpectatorPhase({ lobby, match, preBet, me, playerId, isParticipant, run
             { name: match.playerBName, count: handicap.bBoons, color: "var(--green)" },
           ].map(({ name, count, color }) => (
             <div key={name} style={{ flex: 1, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "10px 12px", textAlign: "center" }}>
-              <div style={{ fontSize: "0.72rem", color, fontWeight: 700, marginBottom: 5 }}>{name}</div>
+              <div style={{ fontSize: "0.72rem", color, fontWeight: 700, marginBottom: 5 }}>{count} Boon{count === 1 ? "" : "s"}</div>
               <div className="modal-player-boons">
                 {count > 0
                   ? Array.from({ length: count }).map((_, i) => <span key={i} className="boon-pip" />)
@@ -838,7 +838,7 @@ function PreBetComplete({ lobby, match, preBet, me, playerId, isParticipant, run
           { name: match.playerBName, count: handicap.bBoons, color: "var(--green)" },
         ].map(({ name, count, color }) => (
           <div key={name} style={{ flex: 1, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "10px 12px", textAlign: "center" }}>
-            <div style={{ fontSize: "0.72rem", color, fontWeight: 700, marginBottom: 5 }}>{name}</div>
+            <div style={{ fontSize: "0.72rem", color, fontWeight: 700, marginBottom: 5 }}>{count} Boon{count === 1 ? "" : "s"}</div>
             <div className="modal-player-boons">
               {count > 0
                 ? Array.from({ length: count }).map((_, i) => <span key={i} className="boon-pip" />)

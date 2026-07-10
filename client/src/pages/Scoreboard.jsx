@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { buildScoreboard } from "../lib/scoreboard.js";
 import ChipIcon from "../components/ChipIcon.jsx";
-import BonusIcon from "../components/BonusIcon.jsx";
+import BonusIcon, { BONUS_INFO } from "../components/BonusIcon.jsx";
+import { requestOpenRule } from "../lib/rulesPanelBridge.js";
 
 // Shown to every player once the host has run Divvy Up. Lists players ranked by
 // final chip count, with the bonuses each earned along the way; each row expands
@@ -26,11 +27,13 @@ export default function Scoreboard({ lobby }) {
                 <span className="scoreboard-name">
                   {player.name}{player.isHost ? " (Host)" : ""}
                 </span>
-                <span className="scoreboard-bonuses">
-                  {(player.bonusHistory || []).map((type, i) => (
-                    <BonusIcon key={i} type={type} size={24} />
-                  ))}
-                </span>
+                {!expanded && (
+                  <span className="scoreboard-bonuses">
+                    {(player.bonusHistory || []).map((type, i) => (
+                      <BonusIcon key={i} type={type} size={24} />
+                    ))}
+                  </span>
+                )}
                 <span className="scoreboard-chips">
                   <ChipIcon size={18} />
                   {player.chips}
@@ -40,6 +43,18 @@ export default function Scoreboard({ lobby }) {
 
               {expanded && (
                 <div className="scoreboard-details">
+                  {(player.bonusHistory || []).length > 0 && (
+                    <div className="scoreboard-bonuses-expanded">
+                      {player.bonusHistory.map((type, i) => (
+                        <BonusIcon
+                          key={i}
+                          type={type}
+                          size={44}
+                          onClick={() => requestOpenRule(BONUS_INFO[type]?.ruleTitle)}
+                        />
+                      ))}
+                    </div>
+                  )}
                   <div className="stat-grid">
                     <div className="stat-tile">
                       <div className="stat-value" style={{ color: "var(--blue-light)" }}>{player.boonsPlaced ?? 0}</div>

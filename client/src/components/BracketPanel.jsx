@@ -28,7 +28,7 @@ export default function BracketPanel({ bracket, highlightPlayerId }) {
       )}
 
       <div
-        className={`side-panel side-panel-left ${open ? "is-open" : ""} ${isActive ? "side-panel-z-active" : "side-panel-z-inactive"}`}
+        className={`side-panel side-panel-left side-panel-full ${open ? "is-open" : ""} ${isActive ? "side-panel-z-active" : "side-panel-z-inactive"}`}
       >
         <div className="side-panel-header">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -53,7 +53,7 @@ export default function BracketPanel({ bracket, highlightPlayerId }) {
 
       <button
         onClick={handleToggle}
-        className={`side-panel-tab side-panel-tab-left ${open ? "is-open" : ""} ${isActive ? "side-panel-tab-z-active" : "side-panel-tab-z-inactive"}`}
+        className={`side-panel-tab side-panel-tab-left side-panel-full ${open ? "is-open" : ""} ${isActive ? "side-panel-tab-z-active" : "side-panel-tab-z-inactive"}`}
       >
         BRACKET
       </button>

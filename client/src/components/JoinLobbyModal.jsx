@@ -37,6 +37,7 @@ export default function JoinLobbyModal({ code, onJoin, error }) {
                 placeholder="Enter your tag"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                maxLength={10}
                 required
               />
             </div>

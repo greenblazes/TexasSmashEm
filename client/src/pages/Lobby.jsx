@@ -275,7 +275,7 @@ export default function Lobby() {
         </div>
       )}
 
-      {lobby.status === "in_progress" && (
+      {(lobby.status === "in_progress" || lobby.status === "complete") && (
         <div>
           {lobby.status === "complete" && lobby.champion && (
             <div className="card card-gold" style={{ textAlign: "center", padding: "24px 22px" }}>
