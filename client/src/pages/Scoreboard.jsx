@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { buildScoreboard } from "../lib/scoreboard.js";
 import ChipIcon from "../components/ChipIcon.jsx";
-import BonusIcon from "../components/BonusIcon.jsx";
+import BonusIcon, { BONUS_INFO } from "../components/BonusIcon.jsx";
+import { requestOpenRule } from "../lib/rulesPanelBridge.js";
 
 // Shown to every player once the host has run Divvy Up. Lists players ranked by
 // final chip count, with the bonuses each earned along the way; each row expands
@@ -45,7 +46,12 @@ export default function Scoreboard({ lobby }) {
                   {(player.bonusHistory || []).length > 0 && (
                     <div className="scoreboard-bonuses-expanded">
                       {player.bonusHistory.map((type, i) => (
-                        <BonusIcon key={i} type={type} size={44} />
+                        <BonusIcon
+                          key={i}
+                          type={type}
+                          size={44}
+                          onClick={() => requestOpenRule(BONUS_INFO[type]?.ruleTitle)}
+                        />
                       ))}
                     </div>
                   )}

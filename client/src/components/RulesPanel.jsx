@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { onOpenRuleRequest } from "../lib/rulesPanelBridge.js";
 import chipIcon from "../assets/icons/chip.png";
 import boonIcon from "../assets/icons/boon.png";
 import cowFeedIcon from "../assets/icons/cowfeed.png";
@@ -125,6 +126,19 @@ export default function RulesPanel() {
   // is driven directly by this panel's own open state, not shared/global
   // state, so it can never end up stuck behind a panel that isn't showing.
   const isActive = open;
+
+  useEffect(() => {
+    return onOpenRuleRequest((ruleTitle) => {
+      for (const section of SECTIONS) {
+        const idx = section.rules.findIndex((r) => r.title === ruleTitle);
+        if (idx !== -1) {
+          setExpanded(section.heading + idx);
+          setOpen(true);
+          return;
+        }
+      }
+    });
+  }, []);
 
   function toggleRule(idx) {
     setExpanded(expanded === idx ? null : idx);
