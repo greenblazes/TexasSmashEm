@@ -56,6 +56,7 @@ export default function Lobby() {
   const [trumpDrawerOpen, setTrumpDrawerOpen] = useState(false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const [joinability, setJoinability] = useState(null); // null = checking, else { joinable, reason }
+  const [boonBounce, setBoonBounce] = useState(false);
 
   async function handleJoinAsNewPlayer(name) {
     return joinLobby(code, name);
@@ -100,6 +101,12 @@ export default function Lobby() {
 
   async function handleBuyBoon() {
     const res = await emitAck("player:buyBoons", { code: lobby.code, playerId, quantity: 1 });
+    if (res.ok) {
+      setBoonBounce(false);
+      // Force a reflow so re-adding the class restarts the animation even if
+      // the player buys again before the previous bounce finished.
+      requestAnimationFrame(() => setBoonBounce(true));
+    }
     return res;
   }
 
@@ -149,11 +156,12 @@ export default function Lobby() {
             )}
             {me && lobby.status === "in_progress" && (
               <div
-                className="chip-pill boon-pill"
+                className={`chip-pill boon-pill${boonBounce ? " boon-pill-bounce" : ""}`}
                 role="button"
                 tabIndex={0}
                 onClick={() => setBoonDrawerOpen((o) => !o)}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setBoonDrawerOpen((o) => !o); }}
+                onAnimationEnd={() => setBoonBounce(false)}
                 style={{ cursor: "pointer" }}
               >
                 <BoonIcon size={22} className="chip-icon" />

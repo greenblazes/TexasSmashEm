@@ -28,7 +28,7 @@
 
   --r:    6px;
   --r-lg: 12px;
-  --font-d: 'Impact', 'Arial Narrow', 'Arial Black', sans-serif;
+  --font-d: 'Anton', 'Arial Narrow', 'Arial Black', sans-serif;
   --font-b: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
@@ -362,6 +362,19 @@ select {
 .boon-pill .chip-value {
   background: linear-gradient(135deg, var(--blue), var(--blue-light));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+/* Plays once when a boon purchase lands, so the header pill visibly
+   acknowledges the change instead of the count just silently ticking up. */
+.boon-pill-bounce {
+  animation: boon-pill-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes boon-pill-bounce {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.25); }
+  60%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
 }
 
 /* ═══════════════════════════════════

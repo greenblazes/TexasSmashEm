@@ -57,6 +57,7 @@ export default function TestTournament() {
   const [, setTick] = useState(0);
   const [viewAsId, setViewAsId] = useState(lobbyRef.current.hostPlayerId);
   const [boonDrawerOpen, setBoonDrawerOpen] = useState(false);
+  const [boonBounce, setBoonBounce] = useState(false);
   const [trumpDrawerOpen, setTrumpDrawerOpen] = useState(false);
   const [log, setLog] = useState([]);
   const [rewards, setRewards] = useState([]);
@@ -172,11 +173,12 @@ export default function TestTournament() {
               </div>
               {lobby.status === "in_progress" && (
                 <div
-                  className="chip-pill boon-pill"
+                  className={`chip-pill boon-pill${boonBounce ? " boon-pill-bounce" : ""}`}
                   role="button"
                   tabIndex={0}
                   onClick={() => setBoonDrawerOpen((o) => !o)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setBoonDrawerOpen((o) => !o); }}
+                  onAnimationEnd={() => setBoonBounce(false)}
                   style={{ cursor: "pointer" }}
                 >
                   <BoonIcon size={22} className="chip-icon" />
@@ -205,7 +207,14 @@ export default function TestTournament() {
               open={boonDrawerOpen}
               cost={lobby.settings.boonCost}
               chips={me.chips ?? 0}
-              onBuy={() => emitAck("player:buyBoons", { code: lobby.code, playerId: viewAsId, quantity: 1 })}
+              onBuy={async () => {
+                const res = await emitAck("player:buyBoons", { code: lobby.code, playerId: viewAsId, quantity: 1 });
+                if (res.ok) {
+                  setBoonBounce(false);
+                  requestAnimationFrame(() => setBoonBounce(true));
+                }
+                return res;
+              }}
             />
           )}
           {canPlayTrump && (
